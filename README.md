@@ -1,1 +1,1 @@
-# CRAPPY FISH 2: Mask
+# CRAPPY FISH 2: The Return of the Ancient Mask
