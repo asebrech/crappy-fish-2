@@ -74,7 +74,7 @@ export default class Bird extends ParentClass {
 
   constructor() {
     super();
-    this.color = 'yellow';
+    this.color = 'blue';
     this.images = new Map<string, HTMLImageElement>();
     this.force = 0;
     this.scaled = {
@@ -88,7 +88,7 @@ export default class Bird extends ParentClass {
     this.causeOfDeath = 0;
     this.flags = 0b0001;
     this.lastCoord = 0;
-    this.wingState = 1;
+    this.wingState = 0;
   }
 
   /**
@@ -109,7 +109,7 @@ export default class Bird extends ParentClass {
     this.images.set('red.1', SpriteDestructor.asset('bird-red-mid'));
     this.images.set('red.2', SpriteDestructor.asset('bird-red-down'));
 
-    Object.assign(SceneGenerator.birdColorList, ['yellow', 'red', 'blue']);
+    Object.assign(SceneGenerator.birdColorList, ['blue']);
     this.use(SceneGenerator.bird);
   }
 
@@ -119,7 +119,7 @@ export default class Bird extends ParentClass {
     this.causeOfDeath = 0;
     this.flags = 0b0001;
     this.lastCoord = 0;
-    this.wingState = 1;
+    this.wingState = 0;
   }
 
   public reset(): void {
@@ -173,12 +173,8 @@ export default class Bird extends ParentClass {
    * @param speed - flap speed
    * */
   private flapWing(speed: number): void {
-    this.wingState = (1 + sineWave(speed, 2)) | 0;
-
-    // Make sure the wing is set to mid flap when the bird is falling
-    if (this.rotation > 70) {
-      this.wingState = 1;
-    }
+    // Toujours garder l'aile en position haute (up)
+    this.wingState = 0;
   }
 
   /**
@@ -301,7 +297,7 @@ export default class Bird extends ParentClass {
     this.rotation = clamp(BIRD_MIN_ROTATION, BIRD_MAX_ROTATION, this.rotation);
 
     if ((this.flags & Bird.FLAG_IS_ALIVE) === 0) {
-      this.wingState = 1;
+      this.wingState = 0;
       return;
     }
 
