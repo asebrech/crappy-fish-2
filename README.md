@@ -1,4 +1,4 @@
-# Flappy Bird Battle Royale 🐦⚔️
+# Crappy Fish 2 🐦⚔️
 
 A multiplayer Battle Royale version of Flappy Bird built with Next.js and Colyseus.
 
