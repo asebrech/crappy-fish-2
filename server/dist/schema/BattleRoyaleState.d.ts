@@ -13,14 +13,23 @@ export declare class Player extends Schema {
     alive: boolean;
     rank: number;
     eliminatedAt: number;
+    vision: number;
+}
+/**
+ * Hole state - represents a gap in a pipe
+ */
+export declare class Hole extends Schema {
+    y: number;
+    size: number;
+    hasItem: boolean;
+    itemCollected: boolean;
 }
 /**
  * Pipe state - synchronized across all clients
  */
 export declare class Pipe extends Schema {
     x: number;
-    gapY: number;
-    gapSize: number;
+    holes: ArraySchema<Hole>;
     passed: boolean;
 }
 /**

@@ -12,12 +12,19 @@ export interface PlayerState {
   alive: boolean;
   rank: number;
   eliminatedAt: number;
+  vision: number;
+}
+
+export interface HoleState {
+  y: number;
+  size: number;
+  hasItem: boolean;
+  itemCollected: boolean;
 }
 
 export interface PipeState {
   x: number;
-  gapY: number;
-  gapSize: number;
+  holes: HoleState[];
   passed: boolean;
 }
 
@@ -210,15 +217,20 @@ export class MultiplayerClient {
       score: player.score,
       alive: player.alive,
       rank: player.rank,
-      eliminatedAt: player.eliminatedAt
+      eliminatedAt: player.eliminatedAt,
+      vision: player.vision
     };
   }
 
   private pipeToState(pipe: any): PipeState {
     return {
       x: pipe.x,
-      gapY: pipe.gapY,
-      gapSize: pipe.gapSize,
+      holes: Array.from(pipe.holes || []).map((hole: any) => ({
+        y: hole.y,
+        size: hole.size,
+        hasItem: hole.hasItem,
+        itemCollected: hole.itemCollected
+      })),
       passed: pipe.passed
     };
   }

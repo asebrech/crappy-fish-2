@@ -14,6 +14,7 @@ export class Player extends Schema {
   alive: boolean = true;
   rank: number = 0;
   eliminatedAt: number = 0;
+  vision: number = 1.0; // Vision clarity (1.0 = clear, 0.0 = blind)
 }
 
 defineTypes(Player, {
@@ -27,6 +28,24 @@ defineTypes(Player, {
   alive: "boolean",
   rank: "number",
   eliminatedAt: "number",
+  vision: "number",
+});
+
+/**
+ * Hole state - represents a gap in a pipe
+ */
+export class Hole extends Schema {
+  y: number = 0.5;           // Hole center Y position (0-1)
+  size: number = 0.18;       // Hole size
+  hasItem: boolean = false;  // Whether this hole contains an item
+  itemCollected: boolean = false; // Whether item was collected
+}
+
+defineTypes(Hole, {
+  y: "number",
+  size: "number",
+  hasItem: "boolean",
+  itemCollected: "boolean",
 });
 
 /**
@@ -34,15 +53,13 @@ defineTypes(Player, {
  */
 export class Pipe extends Schema {
   x: number = 0;
-  gapY: number = 0.5;
-  gapSize: number = 0.18;
+  holes = new ArraySchema<Hole>();  // 2-3 holes per pipe
   passed: boolean = false;
 }
 
 defineTypes(Pipe, {
   x: "number",
-  gapY: "number",
-  gapSize: "number",
+  holes: [Hole],
   passed: "boolean",
 });
 

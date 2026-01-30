@@ -3,6 +3,8 @@
 {
   # https://devenv.sh/basics/
   env.GREET = "devenv";
+  env.DEBUG_MODE = "false";
+  env.NODE_ENV = "development";
 
   # https://devenv.sh/packages/
   packages = [ pkgs.git ];
@@ -16,7 +18,13 @@
 
 
   # https://devenv.sh/processes/
-  # processes.dev.exec = "${lib.getExe pkgs.watchexec} -n -- ls -la";
+  processes = {
+    # Colyseus game server (backend)
+    server.exec = "cd server && pnpm dev";
+    
+    # Next.js frontend (client)
+    client.exec = "pnpm dev";
+  };
 
   # https://devenv.sh/services/
   # services.postgres.enable = true;
@@ -25,11 +33,48 @@
   scripts.hello.exec = ''
     echo hello from $GREET
   '';
+  
+  scripts.install.exec = ''
+    echo "📦 Installing dependencies..."
+    pnpm install
+    cd server && pnpm install
+    echo "✅ Dependencies installed!"
+  '';
+  
+  scripts.build.exec = ''
+    echo "🔨 Building projects..."
+    pnpm build
+    cd server && pnpm build
+    echo "✅ Build complete!"
+  '';
+  
+  scripts.dev.exec = ''
+    echo "🚀 Starting Crappy Fish 2..."
+    echo ""
+    echo "📡 Server will start on: ws://localhost:2567"
+    echo "🌐 Client will start on: http://localhost:3000"
+    echo ""
+    echo "Press Ctrl+C to stop all processes"
+    echo ""
+    devenv up
+  '';
 
   # https://devenv.sh/basics/
   enterShell = ''
-    hello         # Run scripts directly
-    git --version # Use packages
+    echo ""
+    echo "🐦 Crappy Fish 2 - Dev Environment"
+    echo "==================================="
+    echo ""
+    echo "Available commands:"
+    echo "  install  - Install all dependencies"
+    echo "  build    - Build both client and server"
+    echo "  dev      - Start both servers (client + backend)"
+    echo ""
+    echo "Manual commands:"
+    echo "  devenv up      - Start processes in foreground"
+    echo "  devenv up -d   - Start processes in background"
+    echo "  devenv stop    - Stop background processes"
+    echo ""
   '';
 
   # https://devenv.sh/tasks/
