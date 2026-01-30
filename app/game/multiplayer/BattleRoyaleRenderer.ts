@@ -89,7 +89,8 @@ export class BattleRoyaleRenderer {
     const myPlayer = players.find(p => p.id === this.mySessionId);
     
     // Apply underwater blur CSS filter to canvas based on vision
-    if (myPlayer && myPlayer.alive) {
+    // Only apply during active gameplay when player is alive
+    if (state.phase === "playing" && myPlayer && myPlayer.alive) {
       const intensity = 1.0 - myPlayer.vision;
       const blurAmount = Math.round(intensity * 12); // 0-12px blur
       
@@ -103,6 +104,7 @@ export class BattleRoyaleRenderer {
         console.log('Vision:', myPlayer.vision, 'Blur:', blurAmount + 'px');
       }
     } else {
+      // Reset filter during waiting, countdown, finished, or when dead
       this.canvas.style.filter = 'none';
     }
 
@@ -134,8 +136,8 @@ export class BattleRoyaleRenderer {
       this.drawBird(ctx, myPlayer, width, height, 1.0);
     }
 
-    // Draw underwater color overlay (tint effect)
-    if (myPlayer && myPlayer.alive) {
+    // Draw underwater color overlay (tint effect) - only during active gameplay
+    if (state.phase === "playing" && myPlayer && myPlayer.alive) {
       this.drawUnderwaterTintOverlay(ctx, myPlayer.vision, width, height);
     }
 
