@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.BattleRoyaleState = exports.Pipe = exports.Player = void 0;
+exports.BattleRoyaleState = exports.Pipe = exports.Hole = exports.Player = void 0;
 const schema_1 = require("@colyseus/schema");
 /**
  * Player state - represents a bird in the game
@@ -34,22 +34,39 @@ exports.Player = Player;
     eliminatedAt: "number",
 });
 /**
+ * Hole state - represents a gap in a pipe
+ */
+class Hole extends schema_1.Schema {
+    constructor() {
+        super(...arguments);
+        this.y = 0.5; // Hole center Y position (0-1)
+        this.size = 0.18; // Hole size
+        this.hasItem = false; // Whether this hole contains an item
+        this.itemCollected = false; // Whether item was collected
+    }
+}
+exports.Hole = Hole;
+(0, schema_1.defineTypes)(Hole, {
+    y: "number",
+    size: "number",
+    hasItem: "boolean",
+    itemCollected: "boolean",
+});
+/**
  * Pipe state - synchronized across all clients
  */
 class Pipe extends schema_1.Schema {
     constructor() {
         super(...arguments);
         this.x = 0;
-        this.gapY = 0.5;
-        this.gapSize = 0.18;
+        this.holes = new schema_1.ArraySchema(); // 2-3 holes per pipe
         this.passed = false;
     }
 }
 exports.Pipe = Pipe;
 (0, schema_1.defineTypes)(Pipe, {
     x: "number",
-    gapY: "number",
-    gapSize: "number",
+    holes: [Hole],
     passed: "boolean",
 });
 /**

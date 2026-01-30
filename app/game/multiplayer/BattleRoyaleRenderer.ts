@@ -153,31 +153,140 @@ export class BattleRoyaleRenderer {
   private drawPipe(ctx: CanvasRenderingContext2D, pipe: PipeState, width: number, height: number): void {
     const pipeWidth = width * 0.1;
     const pipeX = pipe.x * width - pipeWidth / 2;
-    const gapCenterY = pipe.gapY * height;
-    const gapHeight = pipe.gapSize * height;
-    const gapTop = gapCenterY - gapHeight / 2;
-    const gapBottom = gapCenterY + gapHeight / 2;
     const platformHeight = height * 0.15;
+    const platformY = height - platformHeight;
 
-    if (this.pipeSprites.top && this.pipeSprites.bottom) {
-      // Draw top pipe
-      const topPipeHeight = gapTop;
-      ctx.drawImage(this.pipeSprites.top, pipeX, 0, pipeWidth, topPipeHeight);
-
-      // Draw bottom pipe
-      const bottomPipeHeight = height - gapBottom - platformHeight;
-      ctx.drawImage(this.pipeSprites.bottom, pipeX, gapBottom, pipeWidth, bottomPipeHeight);
-    } else {
-      // Fallback rectangles
-      ctx.fillStyle = '#228B22';
-      ctx.fillRect(pipeX, 0, pipeWidth, gapTop);
-      ctx.fillRect(pipeX, gapBottom, pipeWidth, height - gapBottom - platformHeight);
-
-      // Pipe caps
-      ctx.fillStyle = '#32CD32';
-      ctx.fillRect(pipeX - 3, gapTop - 20, pipeWidth + 6, 20);
-      ctx.fillRect(pipeX - 3, gapBottom, pipeWidth + 6, 20);
+    // Sort holes by Y position for rendering
+    const sortedHoles = [...pipe.holes].sort((a, b) => a.y - b.y);
+    
+    // Draw pipe sections between holes
+    let lastY = 0;
+    
+    for (let i = 0; i < sortedHoles.length; i++) {
+      const hole = sortedHoles[i];
+      const gapCenterY = hole.y * height;
+      const gapHeight = hole.size * height;
+      const gapTop = gapCenterY - gapHeight / 2;
+      const gapBottom = gapCenterY + gapHeight / 2;
+      
+      // Draw pipe section above this hole
+      if (gapTop > lastY) {
+        this.drawPipeSection(ctx, pipeX, lastY, pipeWidth, gapTop - lastY, 'top');
+      }
+      
+      // Draw item if present and not collected
+      if (hole.hasItem && !hole.itemCollected) {
+        this.drawItem(ctx, pipeX + pipeWidth / 2, gapCenterY, width);
+      }
+      
+      lastY = gapBottom;
     }
+    
+    // Draw pipe section from last hole to platform
+    if (lastY < platformY) {
+      this.drawPipeSection(ctx, pipeX, lastY, pipeWidth, platformY - lastY, 'bottom');
+    }
+  }
+
+  private drawPipeSection(
+    ctx: CanvasRenderingContext2D, 
+    x: number, 
+    y: number, 
+    pipeWidth: number, 
+    sectionHeight: number, 
+    type: 'top' | 'bottom'
+  ): void {
+    if (this.pipeSprites[type]) {
+      // Draw pipe sprite (tiled if necessary)
+      ctx.drawImage(this.pipeSprites[type]!, x, y, pipeWidth, sectionHeight);
+    } else {
+      // Fallback: Draw pipe with gradient
+      const gradient = ctx.createLinearGradient(x, 0, x + pipeWidth, 0);
+      gradient.addColorStop(0, '#4A9D2F');
+      gradient.addColorStop(0.5, '#5BBD3B');
+      gradient.addColorStop(1, '#4A9D2F');
+      
+      ctx.fillStyle = gradient;
+      ctx.fillRect(x, y, pipeWidth, sectionHeight);
+      
+      // Pipe edges
+      ctx.fillStyle = '#3A7D1F';
+      ctx.fillRect(x, y, 4, sectionHeight); // Left edge
+      ctx.fillStyle = '#6FD74F';
+      ctx.fillRect(x + pipeWidth - 4, y, 4, sectionHeight); // Right edge
+    }
+  }
+
+  private drawItem(ctx: CanvasRenderingContext2D, x: number, y: number, width: number): void {
+    const itemSize = width * 0.025;
+    const time = this.animationFrame * 0.1;
+    
+    ctx.save();
+    
+    // Pulsing effect
+    const pulseScale = 1 + Math.sin(time) * 0.15;
+    
+    // Rotation effect
+    ctx.translate(x, y);
+    ctx.rotate(time * 0.05);
+    ctx.scale(pulseScale, pulseScale);
+    
+    // Draw golden star
+    this.drawStar(ctx, 0, 0, 5, itemSize, itemSize * 0.5);
+    
+    // Sparkle effect
+    ctx.fillStyle = `rgba(255, 255, 255, ${0.5 + Math.sin(time * 2) * 0.5})`;
+    ctx.beginPath();
+    ctx.arc(itemSize * 0.4, -itemSize * 0.4, itemSize * 0.15, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.restore();
+  }
+
+  private drawStar(
+    ctx: CanvasRenderingContext2D, 
+    cx: number, 
+    cy: number, 
+    spikes: number, 
+    outerRadius: number, 
+    innerRadius: number
+  ): void {
+    let rot = Math.PI / 2 * 3;
+    let x = cx;
+    let y = cy;
+    const step = Math.PI / spikes;
+
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - outerRadius);
+    
+    for (let i = 0; i < spikes; i++) {
+      x = cx + Math.cos(rot) * outerRadius;
+      y = cy + Math.sin(rot) * outerRadius;
+      ctx.lineTo(x, y);
+      rot += step;
+
+      x = cx + Math.cos(rot) * innerRadius;
+      y = cy + Math.sin(rot) * innerRadius;
+      ctx.lineTo(x, y);
+      rot += step;
+    }
+    
+    ctx.lineTo(cx, cy - outerRadius);
+    ctx.closePath();
+    
+    // Golden gradient
+    const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, outerRadius);
+    gradient.addColorStop(0, '#FFD700');
+    gradient.addColorStop(0.5, '#FFA500');
+    gradient.addColorStop(1, '#FF8C00');
+    
+    ctx.fillStyle = gradient;
+    ctx.fill();
+    
+    // Outline
+    ctx.strokeStyle = '#B8860B';
+    ctx.lineWidth = 2;
+    ctx.stroke();
   }
 
   private drawBird(
