@@ -183,7 +183,7 @@ export default function BattleRoyaleGame({ serverUrl = 'ws://localhost:2567' }: 
           color: 'white',
           zIndex: 20
         }}>
-          <img src="/game-assets/icon.png" alt="Flappy Bird" style={{ width: '128px', height: '128px' }} />
+          <img src="/game-assets/icon.png" alt="Crappy Fish 2" style={{ width: '128px', height: '128px' }} />
           <div>Loading assets...</div>
         </div>
       )}
@@ -203,7 +203,7 @@ export default function BattleRoyaleGame({ serverUrl = 'ws://localhost:2567' }: 
           borderRadius: '16px'
         }}>
           <h1 style={{ fontSize: '28px', fontWeight: 'bold', color: '#FFD700', margin: 0 }}>
-            FLAPPY ROYALE
+            CRAPPY FISH 2 ROYALE
           </h1>
           <p style={{ color: '#aaa', margin: 0 }}>Battle Royale Edition</p>
 
