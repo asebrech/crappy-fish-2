@@ -5,7 +5,8 @@ const sfDie = '/game-assets/audio/die.ogg';
 const sfHit = '/game-assets/audio/hit.ogg';
 const sfPoint = '/game-assets/audio/point.ogg';
 const sfSwoosh = '/game-assets/audio/swooshing.ogg';
-const sfWing = '/game-assets/audio/wing.ogg';
+// Mega pets jump sound keys (7 fart sounds)
+const jumpSounds = ['jump1', 'jump2', 'jump3', 'jump4', 'jump5', 'jump6', 'jump7'];
 
 export default class Sfx {
   public static currentVolume = 1;
@@ -40,6 +41,8 @@ export default class Sfx {
 
   public static wing(): void {
     WebSfx.volume(Sfx.currentVolume);
-    WebSfx.play(sfWing);
+    // Play random jump sound
+    const randomIndex = Math.floor(Math.random() * jumpSounds.length);
+    WebSfx.play(jumpSounds[randomIndex]);
   }
 }

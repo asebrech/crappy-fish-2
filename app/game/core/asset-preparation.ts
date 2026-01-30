@@ -9,7 +9,14 @@ const sfDie = '/game-assets/audio/die.ogg';
 const sfHit = '/game-assets/audio/hit.ogg';
 const sfPoint = '/game-assets/audio/point.ogg';
 const sfSwoosh = '/game-assets/audio/swooshing.ogg';
-const sfWing = '/game-assets/audio/wing.ogg';
+// Mega pets sounds for jump (7 fart sounds)
+const sfJump1 = '/game-assets/audio/mega_pets/double-fart.ogg';
+const sfJump2 = '/game-assets/audio/mega_pets/double-jump-fart.ogg';
+const sfJump3 = '/game-assets/audio/mega_pets/fart-1.ogg';
+const sfJump4 = '/game-assets/audio/mega_pets/fart-2.ogg';
+const sfJump5 = '/game-assets/audio/mega_pets/fart-3.ogg';
+const sfJump6 = '/game-assets/audio/mega_pets/fart-4.ogg';
+const sfJump7 = '/game-assets/audio/mega_pets/fart-5.ogg';
 
 export default (callback: IEmptyFunction): void => {
   let isLoaded = false;
@@ -75,6 +82,7 @@ export default (callback: IEmptyFunction): void => {
     sd.cutOut('bird-blue-up', 300, 600, 125, 51);
     sd.cutOut('bird-blue-mid', 300, 682, 130, 53);
     sd.cutOut('bird-blue-down', 300, 755, 125, 63);
+    sd.cutOut('bird-gas-boost', 304, 833, 100, 67);
     sd.cutOut('bird-red-up', 230, 762, 34, 24);
     sd.cutOut('bird-red-mid', 230, 814, 34, 24);
     sd.cutOut('bird-red-down', 230, 866, 34, 24);
@@ -101,10 +109,16 @@ export default (callback: IEmptyFunction): void => {
     new WebSfx(
       {
         hit: sfHit,
-        wing: sfWing,
         swoosh: sfSwoosh,
         die: sfDie,
-        point: sfPoint
+        point: sfPoint,
+        jump1: sfJump1,
+        jump2: sfJump2,
+        jump3: sfJump3,
+        jump4: sfJump4,
+        jump5: sfJump5,
+        jump6: sfJump6,
+        jump7: sfJump7
       },
       loadCallback
     );

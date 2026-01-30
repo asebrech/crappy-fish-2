@@ -19,9 +19,11 @@ export class BattleRoyaleRenderer {
 
   // Cached sprites
   private birdSprites: Map<string, HTMLImageElement> = new Map();
+  private gasBoostSprite: HTMLImageElement | null = null;
   private pipeSprites: { top: HTMLImageElement | null; bottom: HTMLImageElement | null } = { top: null, bottom: null };
   private backgroundSprite: HTMLImageElement | null = null;
   private platformSprite: HTMLImageElement | null = null;
+  private gasTrails: Array<{ x: number; y: number; timestamp: number }> = [];
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -33,6 +35,15 @@ export class BattleRoyaleRenderer {
     this.mySessionId = sessionId;
   }
 
+  onFlap(playerY: number): void {
+    // Add gas trail slightly behind player position (x=0.3 in normalized coordinates)
+    this.gasTrails.push({
+      x: 0.25, // Slightly behind player (player is at 0.3)
+      y: playerY,
+      timestamp: Date.now()
+    });
+  }
+
   loadSprites(): void {
     // Load custom bird sprites
     for (let i = 0; i < CUSTOM_BIRD_SPRITES.length; i++) {
@@ -42,6 +53,13 @@ export class BattleRoyaleRenderer {
       } catch (e) {
         console.warn(`Failed to load sprite ${CUSTOM_BIRD_SPRITES[i]}`);
       }
+    }
+
+    // Load gas boost sprite
+    try {
+      this.gasBoostSprite = SpriteDestructor.asset('bird-gas-boost');
+    } catch (e) {
+      console.warn('Failed to load gas boost sprite');
     }
 
     // Load pipe sprites
@@ -82,6 +100,16 @@ export class BattleRoyaleRenderer {
     // Synchronize platform offset with server game time (60 FPS tick rate)
     if (state.phase === "playing") {
       this.platformOffset = state.gameTime * state.gameSpeed * 0.06;
+      
+      // Update gas trails - move them left at same speed as pipes
+      this.gasTrails.forEach(trail => {
+        trail.x -= state.gameSpeed;
+      });
+      
+      // Remove trails that are off-screen or too old
+      this.gasTrails = this.gasTrails.filter(trail => 
+        trail.x > -0.2 && (Date.now() - trail.timestamp) < 1500
+      );
     }
 
     // Get local player for vision-based effects
@@ -122,6 +150,9 @@ export class BattleRoyaleRenderer {
 
     // Draw platform
     this.drawPlatform(ctx, width, height);
+
+    // Draw gas trails (behind players)
+    this.drawGasTrails(ctx, width, height);
 
     // Draw all players (other players first, then local player on top)
     const otherPlayers = players.filter(p => p.id !== this.mySessionId);
@@ -560,5 +591,38 @@ export class BattleRoyaleRenderer {
     ctx.fillStyle = '#888888';
     ctx.font = '16px Arial';
     ctx.fillText('New game starting soon...', width / 2, height * 0.75);
+  }
+
+  private drawGasTrails(ctx: CanvasRenderingContext2D, width: number, height: number): void {
+    if (!this.gasBoostSprite) return;
+
+    const gasWidth = width * 0.15; // Reduced from 0.18
+    const gasHeight = gasWidth * 0.69; // Correct aspect ratio for gas sprite (67/97)
+
+    this.gasTrails.forEach(trail => {
+      const trailX = trail.x * width;
+      const trailY = trail.y * height;
+      const age = Date.now() - trail.timestamp;
+      
+      // Pop-on effect: scale from 0.5 to 1.0 in first 150ms
+      let scale = 1.0;
+      if (age < 150) {
+        scale = 0.5 + (age / 150) * 0.5; // Smooth scale from 0.5 to 1.0
+      }
+      
+      // Fade out over 1.5s
+      const opacity = Math.max(0.2, 1 - age / 1500);
+
+      ctx.save();
+      ctx.globalAlpha = opacity;
+      ctx.drawImage(
+        this.gasBoostSprite,
+        trailX - (gasWidth * scale) / 2,
+        trailY - (gasHeight * scale) / 2,
+        gasWidth * scale,
+        gasHeight * scale
+      );
+      ctx.restore();
+    });
   }
 }

@@ -18,6 +18,23 @@ export default function BattleRoyaleGame({ serverUrl = 'ws://localhost:2567' }: 
   const clientRef = useRef<MultiplayerClient | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const gameStateRef = useRef<GameState | null>(null);
+  
+  // Jump sounds
+  const jumpSoundsRef = useRef<HTMLAudioElement[]>([]);
+  
+  useEffect(() => {
+    // Load jump sounds (7 fart sounds)
+    const soundPaths = [
+      '/game-assets/audio/mega_pets/double-fart.ogg',
+      '/game-assets/audio/mega_pets/double-jump-fart.ogg',
+      '/game-assets/audio/mega_pets/fart-1.ogg',
+      '/game-assets/audio/mega_pets/fart-2.ogg',
+      '/game-assets/audio/mega_pets/fart-3.ogg',
+      '/game-assets/audio/mega_pets/fart-4.ogg',
+      '/game-assets/audio/mega_pets/fart-5.ogg'
+    ];
+    jumpSoundsRef.current = soundPaths.map(path => new Audio(path));
+  }, []);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -51,6 +68,18 @@ export default function BattleRoyaleGame({ serverUrl = 'ws://localhost:2567' }: 
   // Handle flap
   const handleFlap = useCallback(() => {
     clientRef.current?.flap();
+    const myPlayer = gameStateRef.current?.players.get(clientRef.current?.sessionId || '');
+    if (myPlayer) {
+      rendererRef.current?.onFlap(myPlayer.y);
+    }
+    
+    // Play random jump sound
+    if (jumpSoundsRef.current.length > 0) {
+      const randomIndex = Math.floor(Math.random() * jumpSoundsRef.current.length);
+      const sound = jumpSoundsRef.current[randomIndex];
+      sound.currentTime = 0; // Reset to start
+      sound.play().catch(() => {}); // Ignore autoplay errors
+    }
   }, []);
 
   // Connect to server
