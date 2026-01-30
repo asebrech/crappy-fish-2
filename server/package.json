@@ -1,7 +1,7 @@
 {
   "name": "flappy-royale-server",
   "version": "1.0.0",
-  "description": "Flappy Bird Battle Royale - Colyseus Server",
+  "description": "Crappy Fish 2 Battle Royale - Colyseus Server",
   "main": "dist/index.js",
   "scripts": {
     "dev": "DEBUG_MODE=true tsx watch src/index.ts",

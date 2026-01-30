@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Flappy Bird",
-  description: "A recreation of the classic Flappy Bird game",
+  title: "Crappy Fish 2",
+  description: "Crappy Fish 2 - Battle Royale Game",
 };
 
 export default function RootLayout({

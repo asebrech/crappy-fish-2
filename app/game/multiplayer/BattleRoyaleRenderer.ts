@@ -447,7 +447,7 @@ export class BattleRoyaleRenderer {
     ctx.fillStyle = '#FFD700';
     ctx.font = 'bold 32px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('FLAPPY ROYALE', width / 2, height * 0.3);
+    ctx.fillText('CRAPPY FISH 2 ROYALE', width / 2, height * 0.3);
 
     // Player count
     ctx.fillStyle = '#FFFFFF';

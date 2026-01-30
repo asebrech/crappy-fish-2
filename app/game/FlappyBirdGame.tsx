@@ -40,7 +40,7 @@ export default function FlappyBirdGame({ className }: FlappyBirdGameProps) {
           color: 'white',
           zIndex: 10
         }}>
-          <img src="/game-assets/icon.png" alt="Flappy Bird" style={{ width: '128px', height: '128px' }} />
+          <img src="/game-assets/icon.png" alt="Crappy Fish 2" style={{ width: '128px', height: '128px' }} />
           <div>Loading...</div>
         </div>
       )}
