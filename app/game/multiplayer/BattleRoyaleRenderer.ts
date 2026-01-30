@@ -6,12 +6,8 @@
 import { GameState, PlayerState, PipeState } from './MultiplayerClient';
 import SpriteDestructor from '../core/lib/sprite-destructor';
 
-// Bird colors available
-const BIRD_SPRITES: Record<string, string[]> = {
-  yellow: ['bird-yellow-up', 'bird-yellow-mid', 'bird-yellow-down'],
-  red: ['bird-red-up', 'bird-red-mid', 'bird-red-down'],
-  blue: ['bird-blue-up', 'bird-blue-mid', 'bird-blue-down']
-};
+// Custom bird sprites (neutral, down, up)
+const CUSTOM_BIRD_SPRITES = ['bird-blue-up', 'bird-blue-mid', 'bird-blue-down'];
 
 export class BattleRoyaleRenderer {
   private canvas: HTMLCanvasElement;
@@ -19,6 +15,7 @@ export class BattleRoyaleRenderer {
   private canvasSize: { width: number; height: number };
   private mySessionId: string = "";
   private animationFrame: number = 0;
+  private platformOffset: number = 0;
 
   // Cached sprites
   private birdSprites: Map<string, HTMLImageElement> = new Map();
@@ -37,15 +34,13 @@ export class BattleRoyaleRenderer {
   }
 
   loadSprites(): void {
-    // Load bird sprites
-    for (const [color, sprites] of Object.entries(BIRD_SPRITES)) {
-      for (let i = 0; i < sprites.length; i++) {
-        try {
-          const sprite = SpriteDestructor.asset(sprites[i]);
-          this.birdSprites.set(`${color}.${i}`, sprite);
-        } catch (e) {
-          console.warn(`Failed to load sprite ${sprites[i]}`);
-        }
+    // Load custom bird sprites
+    for (let i = 0; i < CUSTOM_BIRD_SPRITES.length; i++) {
+      try {
+        const sprite = SpriteDestructor.asset(CUSTOM_BIRD_SPRITES[i]);
+        this.birdSprites.set(`custom.${i}`, sprite);
+      } catch (e) {
+        console.warn(`Failed to load sprite ${CUSTOM_BIRD_SPRITES[i]}`);
       }
     }
 
@@ -83,6 +78,11 @@ export class BattleRoyaleRenderer {
     
     const ctx = this.context;
     const { width, height } = this.canvasSize;
+
+    // Synchronize platform offset with server game time (60 FPS tick rate)
+    if (state.phase === "playing") {
+      this.platformOffset = state.gameTime * state.gameSpeed * 0.06;
+    }
 
     // Clear canvas
     ctx.clearRect(0, 0, width, height);
@@ -136,9 +136,11 @@ export class BattleRoyaleRenderer {
     const platformY = height - platformHeight;
 
     if (this.platformSprite) {
-      // Tile the platform sprite
+      // Tile the platform sprite with scrolling offset
       const tileWidth = platformHeight * 2;
-      for (let x = 0; x < width; x += tileWidth) {
+      const offsetPixels = -(this.platformOffset * width) % tileWidth;
+      
+      for (let x = offsetPixels; x < width; x += tileWidth) {
         ctx.drawImage(this.platformSprite, x, platformY, tileWidth, platformHeight);
       }
     } else {
@@ -189,12 +191,12 @@ export class BattleRoyaleRenderer {
   ): void {
     const birdX = width * 0.3; // Fixed X position
     const birdY = player.y * height;
-    const birdWidth = width * 0.08;
-    const birdHeight = birdWidth * 0.7;
+    const birdWidth = width * 0.25; // GIGANTIC BIRD MODE 🐦
+    const birdHeight = birdWidth * 0.45; // Fixed aspect ratio (avg of sprites: ~125x55 → 0.44)
 
-    // Get wing state based on animation
+    // Get wing state based on animation (use custom sprite instead of color-based)
     const wingState = player.alive ? Math.floor(this.animationFrame / 5) % 3 : 1;
-    const spriteKey = `${player.color}.${wingState}`;
+    const spriteKey = `custom.${wingState}`;
     const sprite = this.birdSprites.get(spriteKey);
 
     ctx.save();
