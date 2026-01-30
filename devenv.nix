@@ -3,6 +3,8 @@
 {
   # https://devenv.sh/basics/
   env.GREET = "devenv";
+  env.DEBUG_MODE = "false";
+  env.NODE_ENV = "development";
 
   # https://devenv.sh/packages/
   packages = [ pkgs.git ];
