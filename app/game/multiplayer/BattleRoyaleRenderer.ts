@@ -114,6 +114,15 @@ export class BattleRoyaleRenderer {
       this.drawBird(ctx, myPlayer, width, height, 1.0);
     }
 
+    // Draw vignette overlay for local player (vision degradation effect)
+    if (myPlayer && myPlayer.alive) {
+      // Debug: log vision value occasionally
+      if (this.animationFrame % 60 === 0) {
+        console.log('Vision:', myPlayer.vision);
+      }
+      this.drawVignetteOverlay(ctx, myPlayer.vision, width, height);
+    }
+
     // Draw UI overlay
     this.drawUI(ctx, state, width, height);
   }
@@ -289,6 +298,39 @@ export class BattleRoyaleRenderer {
     ctx.stroke();
   }
 
+  private drawVignetteOverlay(
+    ctx: CanvasRenderingContext2D,
+    vision: number,
+    width: number,
+    height: number
+  ): void {
+    // Calculate vignette intensity (inverse of vision)
+    // vision=1.0 → intensity=0.0 (no vignette)
+    // vision=0.05 → intensity=0.95 (EXTREMELY heavy vignette)
+    const intensity = 1.0 - vision;
+    
+    // Create radial gradient from center
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const maxRadius = Math.sqrt(width * width + height * height) / 2;
+    
+    // Inner radius shrinks VERY aggressively as vision decreases
+    const innerRadius = maxRadius * vision * 0.25; // Reduced from 0.4 to 0.25 - much tighter
+    
+    const gradient = ctx.createRadialGradient(
+      centerX, centerY, innerRadius,
+      centerX, centerY, maxRadius
+    );
+    
+    // EXTREMELY dark gradient
+    gradient.addColorStop(0, `rgba(0, 0, 0, ${intensity * 0.4})`); // Much darker center
+    gradient.addColorStop(0.3, `rgba(0, 0, 0, ${intensity * 0.85})`); // Very aggressive early
+    gradient.addColorStop(1, `rgba(0, 0, 0, ${Math.min(intensity * 0.99, 0.98)})`); // Nearly pitch black edges
+    
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+  }
+
   private drawBird(
     ctx: CanvasRenderingContext2D,
     player: PlayerState,
@@ -418,6 +460,15 @@ export class BattleRoyaleRenderer {
       ctx.font = 'bold 24px Arial';
       ctx.textAlign = 'center';
       ctx.fillText(myPlayer.score.toString(), width - 55, 38);
+      
+      // Vision indicator (top right, below score)
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+      ctx.fillRect(width - 100, 60, 90, 30);
+      const visionPercent = Math.round(myPlayer.vision * 100);
+      const visionColor = myPlayer.vision > 0.5 ? '#00FF00' : myPlayer.vision > 0.25 ? '#FFFF00' : '#FF4444';
+      ctx.fillStyle = visionColor;
+      ctx.font = 'bold 16px Arial';
+      ctx.fillText(`Vision: ${visionPercent}%`, width - 55, 80);
     }
 
     // "YOU DIED" message if eliminated

@@ -12,6 +12,7 @@ export interface PlayerState {
   alive: boolean;
   rank: number;
   eliminatedAt: number;
+  vision: number;
 }
 
 export interface HoleState {
@@ -216,7 +217,8 @@ export class MultiplayerClient {
       score: player.score,
       alive: player.alive,
       rank: player.rank,
-      eliminatedAt: player.eliminatedAt
+      eliminatedAt: player.eliminatedAt,
+      vision: player.vision
     };
   }
 

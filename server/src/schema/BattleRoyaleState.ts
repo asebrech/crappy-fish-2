@@ -14,6 +14,7 @@ export class Player extends Schema {
   alive: boolean = true;
   rank: number = 0;
   eliminatedAt: number = 0;
+  vision: number = 1.0; // Vision clarity (1.0 = clear, 0.0 = blind)
 }
 
 defineTypes(Player, {
@@ -27,6 +28,7 @@ defineTypes(Player, {
   alive: "boolean",
   rank: "number",
   eliminatedAt: "number",
+  vision: "number",
 });
 
 /**

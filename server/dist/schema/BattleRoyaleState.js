@@ -18,6 +18,7 @@ class Player extends schema_1.Schema {
         this.alive = true;
         this.rank = 0;
         this.eliminatedAt = 0;
+        this.vision = 1.0; // Vision clarity (1.0 = clear, 0.0 = blind)
     }
 }
 exports.Player = Player;
@@ -32,6 +33,7 @@ exports.Player = Player;
     alive: "boolean",
     rank: "number",
     eliminatedAt: "number",
+    vision: "number",
 });
 /**
  * Hole state - represents a gap in a pipe

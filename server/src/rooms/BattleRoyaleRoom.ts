@@ -20,7 +20,12 @@ const MAX_HOLES_PER_PIPE = 3;
 const MIN_HOLE_SPACING = 0.25; // Minimum vertical spacing between holes
 const MIN_HOLE_SIZE = 0.15;
 const MAX_HOLE_SIZE = 0.2;
-const ITEM_SPAWN_CHANCE = 0.35; // 35% chance per hole (max 1 per pipe)
+const ITEM_SPAWN_CHANCE = 0.5; // 50% chance per pipe (increased from 35% to compensate for faster degradation)
+
+// Vision system configuration
+const VISION_DEGRADATION_RATE = 0.002; // Vision loss per tick (60 ticks/sec) = ~12% per second = ~7 seconds to reach minimum
+const MIN_VISION = 0.05; // Minimum vision - VERY dark (barely able to see)
+const VISION_RESTORE_AMOUNT = 0.7; // How much diving mask restores (increased to compensate)
 
 export class BattleRoyaleRoom extends Room<BattleRoyaleState> {
   maxClients = MAX_PLAYERS;
@@ -139,6 +144,7 @@ export class BattleRoyaleRoom extends Room<BattleRoyaleState> {
       player.rotation = 0;
       player.score = 0;
       player.alive = true;
+      player.vision = 1.0; // Start with full vision
     });
 
     // Clear pipes and generate initial ones
@@ -276,6 +282,9 @@ export class BattleRoyaleRoom extends Room<BattleRoyaleState> {
     player.rotation += (targetRotation - player.rotation) * 0.1;
     player.rotation = Math.max(-20, Math.min(90, player.rotation));
 
+    // Degrade vision over time
+    player.vision = Math.max(MIN_VISION, player.vision - VISION_DEGRADATION_RATE);
+
     // Check collisions
     this.checkCollisions(player);
   }
@@ -314,11 +323,15 @@ export class BattleRoyaleRoom extends Room<BattleRoyaleState> {
           if (player.y - birdSize >= gapTop && player.y + birdSize <= gapBottom) {
             inAnyHole = true;
             
-            // Check for item collection
+            // Check for item collection (diving mask)
             if (hole.hasItem && !hole.itemCollected && birdX > pipe.x) {
               hole.itemCollected = true;
+              
+              // Restore vision (diving mask effect)
+              player.vision = Math.min(1.0, player.vision + VISION_RESTORE_AMOUNT);
+              
               player.score += 5; // Bonus points for collecting item
-              console.log(`Player ${player.name} collected item! +5 points`);
+              console.log(`Player ${player.name} collected diving mask! Vision restored to ${(player.vision * 100).toFixed(0)}%`);
             }
             
             break;

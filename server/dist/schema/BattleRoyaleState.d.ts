@@ -13,6 +13,7 @@ export declare class Player extends Schema {
     alive: boolean;
     rank: number;
     eliminatedAt: number;
+    vision: number;
 }
 /**
  * Hole state - represents a gap in a pipe
