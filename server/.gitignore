@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+pnpm-lock.yaml
+
+# Build output
+dist/
+
+# Environment variables
+.env
+.env.local
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store

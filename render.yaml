@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: flappy-royale-server
+    runtime: node
+    buildCommand: cd server && pnpm install && pnpm build
+    startCommand: cd server && pnpm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 2567
