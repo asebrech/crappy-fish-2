@@ -84,6 +84,30 @@ export class BattleRoyaleRenderer {
       this.platformOffset = state.gameTime * state.gameSpeed * 0.06;
     }
 
+    // Get local player for vision-based effects
+    const players = Array.from(state.players.values());
+    const myPlayer = players.find(p => p.id === this.mySessionId);
+    
+    // Apply underwater blur CSS filter to canvas based on vision
+    // Only apply during active gameplay when player is alive
+    if (state.phase === "playing" && myPlayer && myPlayer.alive) {
+      const intensity = 1.0 - myPlayer.vision;
+      const blurAmount = Math.round(intensity * 12); // 0-12px blur
+      
+      // Apply CSS filter to the entire canvas
+      this.canvas.style.filter = blurAmount > 0 
+        ? `blur(${blurAmount}px) hue-rotate(${intensity * 20}deg) saturate(${1 + intensity * 0.3})`
+        : 'none';
+      
+      // Debug log
+      if (this.animationFrame % 60 === 0) {
+        console.log('Vision:', myPlayer.vision, 'Blur:', blurAmount + 'px');
+      }
+    } else {
+      // Reset filter during waiting, countdown, finished, or when dead
+      this.canvas.style.filter = 'none';
+    }
+
     // Clear canvas
     ctx.clearRect(0, 0, width, height);
     ctx.imageSmoothingEnabled = false;
@@ -100,9 +124,7 @@ export class BattleRoyaleRenderer {
     this.drawPlatform(ctx, width, height);
 
     // Draw all players (other players first, then local player on top)
-    const players = Array.from(state.players.values());
     const otherPlayers = players.filter(p => p.id !== this.mySessionId);
-    const myPlayer = players.find(p => p.id === this.mySessionId);
 
     // Draw other players (slightly transparent)
     otherPlayers.forEach(player => {
@@ -114,13 +136,9 @@ export class BattleRoyaleRenderer {
       this.drawBird(ctx, myPlayer, width, height, 1.0);
     }
 
-    // Draw vignette overlay for local player (vision degradation effect)
-    if (myPlayer && myPlayer.alive) {
-      // Debug: log vision value occasionally
-      if (this.animationFrame % 60 === 0) {
-        console.log('Vision:', myPlayer.vision);
-      }
-      this.drawVignetteOverlay(ctx, myPlayer.vision, width, height);
+    // Draw underwater color overlay (tint effect) - only during active gameplay
+    if (state.phase === "playing" && myPlayer && myPlayer.alive) {
+      this.drawUnderwaterTintOverlay(ctx, myPlayer.vision, width, height);
     }
 
     // Draw UI overlay
@@ -300,37 +318,50 @@ export class BattleRoyaleRenderer {
     ctx.stroke();
   }
 
-  private drawVignetteOverlay(
+  private drawUnderwaterTintOverlay(
     ctx: CanvasRenderingContext2D,
     vision: number,
     width: number,
     height: number
   ): void {
-    // Calculate vignette intensity (inverse of vision)
-    // vision=1.0 → intensity=0.0 (no vignette)
-    // vision=0.05 → intensity=0.95 (EXTREMELY heavy vignette)
+    // Calculate intensity (inverse of vision)
     const intensity = 1.0 - vision;
     
-    // Create radial gradient from center
-    const centerX = width / 2;
-    const centerY = height / 2;
-    const maxRadius = Math.sqrt(width * width + height * height) / 2;
+    if (intensity < 0.01) return; // Skip if vision is near perfect
     
-    // Inner radius shrinks VERY aggressively as vision decreases
-    const innerRadius = maxRadius * vision * 0.25; // Reduced from 0.4 to 0.25 - much tighter
+    // Save current canvas state
+    ctx.save();
     
-    const gradient = ctx.createRadialGradient(
-      centerX, centerY, innerRadius,
-      centerX, centerY, maxRadius
+    // Create underwater color tint overlay (blue-green)
+    const tintOpacity = intensity * 0.25;
+    
+    // Animated wave effect
+    const waveOffset = Math.sin(this.animationFrame * 0.03) * 30 * intensity;
+    const waveOffset2 = Math.cos(this.animationFrame * 0.05) * 20 * intensity;
+    
+    // Draw multiple gradient layers for underwater depth effect
+    const gradient1 = ctx.createRadialGradient(
+      width / 2 + waveOffset, height / 2, 0,
+      width / 2, height / 2, Math.max(width, height) * 0.8
     );
+    gradient1.addColorStop(0, `rgba(80, 160, 200, ${tintOpacity * 0.2})`);
+    gradient1.addColorStop(1, `rgba(20, 100, 150, ${tintOpacity * 0.6})`);
     
-    // EXTREMELY dark gradient
-    gradient.addColorStop(0, `rgba(0, 0, 0, ${intensity * 0.4})`); // Much darker center
-    gradient.addColorStop(0.3, `rgba(0, 0, 0, ${intensity * 0.85})`); // Very aggressive early
-    gradient.addColorStop(1, `rgba(0, 0, 0, ${Math.min(intensity * 0.99, 0.98)})`); // Nearly pitch black edges
-    
-    ctx.fillStyle = gradient;
+    ctx.fillStyle = gradient1;
     ctx.fillRect(0, 0, width, height);
+    
+    // Second wave layer for more depth
+    const gradient2 = ctx.createRadialGradient(
+      width / 2 - waveOffset2, height / 2 + waveOffset, 0,
+      width / 2, height / 2, Math.max(width, height) * 0.6
+    );
+    gradient2.addColorStop(0, `rgba(100, 180, 220, ${tintOpacity * 0.15})`);
+    gradient2.addColorStop(1, `rgba(40, 120, 180, ${tintOpacity * 0.4})`);
+    
+    ctx.fillStyle = gradient2;
+    ctx.fillRect(0, 0, width, height);
+    
+    ctx.restore();
   }
 
   private drawBird(
