@@ -1,0 +1,371 @@
+/**
+ * Multiplayer Battle Royale Game Renderer
+ * Renders game state received from the server
+ */
+
+import { GameState, PlayerState, PipeState } from './MultiplayerClient';
+import SpriteDestructor from '../core/lib/sprite-destructor';
+
+// Bird colors available
+const BIRD_SPRITES: Record<string, string[]> = {
+  yellow: ['bird-yellow-up', 'bird-yellow-mid', 'bird-yellow-down'],
+  red: ['bird-red-up', 'bird-red-mid', 'bird-red-down'],
+  blue: ['bird-blue-up', 'bird-blue-mid', 'bird-blue-down']
+};
+
+export class BattleRoyaleRenderer {
+  private canvas: HTMLCanvasElement;
+  private context: CanvasRenderingContext2D;
+  private canvasSize: { width: number; height: number };
+  private mySessionId: string = "";
+  private animationFrame: number = 0;
+
+  // Cached sprites
+  private birdSprites: Map<string, HTMLImageElement> = new Map();
+  private pipeSprites: { top: HTMLImageElement | null; bottom: HTMLImageElement | null } = { top: null, bottom: null };
+  private backgroundSprite: HTMLImageElement | null = null;
+  private platformSprite: HTMLImageElement | null = null;
+
+  constructor(canvas: HTMLCanvasElement) {
+    this.canvas = canvas;
+    this.context = canvas.getContext('2d', { alpha: false })!;
+    this.canvasSize = { width: canvas.width, height: canvas.height };
+  }
+
+  setSessionId(sessionId: string): void {
+    this.mySessionId = sessionId;
+  }
+
+  loadSprites(): void {
+    // Load bird sprites
+    for (const [color, sprites] of Object.entries(BIRD_SPRITES)) {
+      for (let i = 0; i < sprites.length; i++) {
+        try {
+          const sprite = SpriteDestructor.asset(sprites[i]);
+          this.birdSprites.set(`${color}.${i}`, sprite);
+        } catch (e) {
+          console.warn(`Failed to load sprite ${sprites[i]}`);
+        }
+      }
+    }
+
+    // Load pipe sprites
+    try {
+      this.pipeSprites.top = SpriteDestructor.asset('pipe-green-top');
+      this.pipeSprites.bottom = SpriteDestructor.asset('pipe-green-bottom');
+    } catch (e) {
+      console.warn('Failed to load pipe sprites');
+    }
+
+    // Load background
+    try {
+      this.backgroundSprite = SpriteDestructor.asset('theme-day');
+    } catch (e) {
+      console.warn('Failed to load background sprite');
+    }
+
+    // Load platform
+    try {
+      this.platformSprite = SpriteDestructor.asset('platform');
+    } catch (e) {
+      console.warn('Failed to load platform sprite');
+    }
+  }
+
+  resize(width: number, height: number): void {
+    this.canvasSize = { width, height };
+    this.canvas.width = width;
+    this.canvas.height = height;
+  }
+
+  render(state: GameState): void {
+    this.animationFrame++;
+    
+    const ctx = this.context;
+    const { width, height } = this.canvasSize;
+
+    // Clear canvas
+    ctx.clearRect(0, 0, width, height);
+    ctx.imageSmoothingEnabled = false;
+
+    // Draw background
+    this.drawBackground(ctx, width, height);
+
+    // Draw pipes
+    state.pipes.forEach(pipe => {
+      this.drawPipe(ctx, pipe, width, height);
+    });
+
+    // Draw platform
+    this.drawPlatform(ctx, width, height);
+
+    // Draw all players (other players first, then local player on top)
+    const players = Array.from(state.players.values());
+    const otherPlayers = players.filter(p => p.id !== this.mySessionId);
+    const myPlayer = players.find(p => p.id === this.mySessionId);
+
+    // Draw other players (slightly transparent)
+    otherPlayers.forEach(player => {
+      this.drawBird(ctx, player, width, height, 0.7);
+    });
+
+    // Draw local player
+    if (myPlayer) {
+      this.drawBird(ctx, myPlayer, width, height, 1.0);
+    }
+
+    // Draw UI overlay
+    this.drawUI(ctx, state, width, height);
+  }
+
+  private drawBackground(ctx: CanvasRenderingContext2D, width: number, height: number): void {
+    if (this.backgroundSprite) {
+      ctx.drawImage(this.backgroundSprite, 0, 0, width, height);
+    } else {
+      // Fallback gradient
+      const gradient = ctx.createLinearGradient(0, 0, 0, height);
+      gradient.addColorStop(0, '#87CEEB');
+      gradient.addColorStop(1, '#E0F6FF');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, width, height);
+    }
+  }
+
+  private drawPlatform(ctx: CanvasRenderingContext2D, width: number, height: number): void {
+    const platformHeight = height * 0.15;
+    const platformY = height - platformHeight;
+
+    if (this.platformSprite) {
+      // Tile the platform sprite
+      const tileWidth = platformHeight * 2;
+      for (let x = 0; x < width; x += tileWidth) {
+        ctx.drawImage(this.platformSprite, x, platformY, tileWidth, platformHeight);
+      }
+    } else {
+      // Fallback solid color
+      ctx.fillStyle = '#DEB887';
+      ctx.fillRect(0, platformY, width, platformHeight);
+      ctx.fillStyle = '#8B4513';
+      ctx.fillRect(0, platformY, width, 5);
+    }
+  }
+
+  private drawPipe(ctx: CanvasRenderingContext2D, pipe: PipeState, width: number, height: number): void {
+    const pipeWidth = width * 0.1;
+    const pipeX = pipe.x * width - pipeWidth / 2;
+    const gapCenterY = pipe.gapY * height;
+    const gapHeight = pipe.gapSize * height;
+    const gapTop = gapCenterY - gapHeight / 2;
+    const gapBottom = gapCenterY + gapHeight / 2;
+    const platformHeight = height * 0.15;
+
+    if (this.pipeSprites.top && this.pipeSprites.bottom) {
+      // Draw top pipe
+      const topPipeHeight = gapTop;
+      ctx.drawImage(this.pipeSprites.top, pipeX, 0, pipeWidth, topPipeHeight);
+
+      // Draw bottom pipe
+      const bottomPipeHeight = height - gapBottom - platformHeight;
+      ctx.drawImage(this.pipeSprites.bottom, pipeX, gapBottom, pipeWidth, bottomPipeHeight);
+    } else {
+      // Fallback rectangles
+      ctx.fillStyle = '#228B22';
+      ctx.fillRect(pipeX, 0, pipeWidth, gapTop);
+      ctx.fillRect(pipeX, gapBottom, pipeWidth, height - gapBottom - platformHeight);
+
+      // Pipe caps
+      ctx.fillStyle = '#32CD32';
+      ctx.fillRect(pipeX - 3, gapTop - 20, pipeWidth + 6, 20);
+      ctx.fillRect(pipeX - 3, gapBottom, pipeWidth + 6, 20);
+    }
+  }
+
+  private drawBird(
+    ctx: CanvasRenderingContext2D,
+    player: PlayerState,
+    width: number,
+    height: number,
+    alpha: number
+  ): void {
+    const birdX = width * 0.3; // Fixed X position
+    const birdY = player.y * height;
+    const birdWidth = width * 0.08;
+    const birdHeight = birdWidth * 0.7;
+
+    // Get wing state based on animation
+    const wingState = player.alive ? Math.floor(this.animationFrame / 5) % 3 : 1;
+    const spriteKey = `${player.color}.${wingState}`;
+    const sprite = this.birdSprites.get(spriteKey);
+
+    ctx.save();
+    ctx.globalAlpha = player.alive ? alpha : 0.4;
+    ctx.translate(birdX, birdY);
+    ctx.rotate((player.rotation * Math.PI) / 180);
+
+    if (sprite) {
+      ctx.drawImage(sprite, -birdWidth / 2, -birdHeight / 2, birdWidth, birdHeight);
+    } else {
+      // Fallback circle
+      ctx.fillStyle = player.color;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, birdWidth / 2, birdHeight / 2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    ctx.restore();
+
+    // Draw player name above bird
+    if (player.alive) {
+      ctx.save();
+      ctx.fillStyle = player.id === this.mySessionId ? '#FFD700' : '#FFFFFF';
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 3;
+      ctx.font = 'bold 14px Arial';
+      ctx.textAlign = 'center';
+      const nameY = birdY - birdHeight - 5;
+      ctx.strokeText(player.name, birdX, nameY);
+      ctx.fillText(player.name, birdX, nameY);
+      ctx.restore();
+    }
+  }
+
+  private drawUI(ctx: CanvasRenderingContext2D, state: GameState, width: number, height: number): void {
+    ctx.save();
+
+    // Draw phase-specific UI
+    switch (state.phase) {
+      case 'waiting':
+        this.drawWaitingUI(ctx, state, width, height);
+        break;
+      case 'countdown':
+        this.drawCountdownUI(ctx, state, width, height);
+        break;
+      case 'playing':
+        this.drawPlayingUI(ctx, state, width, height);
+        break;
+      case 'finished':
+        this.drawFinishedUI(ctx, state, width, height);
+        break;
+    }
+
+    ctx.restore();
+  }
+
+  private drawWaitingUI(ctx: CanvasRenderingContext2D, state: GameState, width: number, height: number): void {
+    // Semi-transparent overlay
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillRect(0, 0, width, height);
+
+    // Title
+    ctx.fillStyle = '#FFD700';
+    ctx.font = 'bold 32px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('FLAPPY ROYALE', width / 2, height * 0.3);
+
+    // Player count
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '24px Arial';
+    ctx.fillText(`Players: ${state.totalPlayers}`, width / 2, height * 0.45);
+    ctx.fillText('Waiting for players...', width / 2, height * 0.55);
+    ctx.font = '16px Arial';
+    ctx.fillText('(Need at least 2 players to start)', width / 2, height * 0.65);
+  }
+
+  private drawCountdownUI(ctx: CanvasRenderingContext2D, state: GameState, width: number, height: number): void {
+    // Semi-transparent overlay
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.fillRect(0, 0, width, height);
+
+    // Countdown number
+    ctx.fillStyle = '#FFD700';
+    ctx.font = 'bold 72px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(state.countdown.toString(), width / 2, height / 2);
+
+    ctx.font = '24px Arial';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillText('GET READY!', width / 2, height * 0.35);
+  }
+
+  private drawPlayingUI(ctx: CanvasRenderingContext2D, state: GameState, width: number, height: number): void {
+    // Players alive counter (top left)
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillRect(10, 10, 120, 40);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 18px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText(`Alive: ${state.playersAlive}/${state.totalPlayers}`, 20, 35);
+
+    // My score (top right)
+    const myPlayer = state.players.get(this.mySessionId);
+    if (myPlayer) {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+      ctx.fillRect(width - 100, 10, 90, 40);
+      ctx.fillStyle = '#FFD700';
+      ctx.font = 'bold 24px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(myPlayer.score.toString(), width - 55, 38);
+    }
+
+    // "YOU DIED" message if eliminated
+    if (myPlayer && !myPlayer.alive) {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+      ctx.fillRect(0, height * 0.4, width, height * 0.2);
+      ctx.fillStyle = '#FF4444';
+      ctx.font = 'bold 36px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('YOU DIED!', width / 2, height * 0.5);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '20px Arial';
+      ctx.fillText(`Rank: #${myPlayer.rank}`, width / 2, height * 0.55);
+    }
+  }
+
+  private drawFinishedUI(ctx: CanvasRenderingContext2D, state: GameState, width: number, height: number): void {
+    // Overlay
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(0, 0, width, height);
+
+    const winner = state.players.get(state.winnerId);
+    const isWinner = state.winnerId === this.mySessionId;
+
+    if (isWinner) {
+      // Victory screen
+      ctx.fillStyle = '#FFD700';
+      ctx.font = 'bold 48px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('VICTORY!', width / 2, height * 0.35);
+      ctx.font = 'bold 24px Arial';
+      ctx.fillText('#1 WINNER', width / 2, height * 0.45);
+    } else {
+      // Defeat screen
+      ctx.fillStyle = '#FF4444';
+      ctx.font = 'bold 36px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('GAME OVER', width / 2, height * 0.35);
+
+      if (winner) {
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = '24px Arial';
+        ctx.fillText(`Winner: ${winner.name}`, width / 2, height * 0.45);
+      }
+
+      const myPlayer = state.players.get(this.mySessionId);
+      if (myPlayer) {
+        ctx.fillStyle = '#AAAAAA';
+        ctx.font = '20px Arial';
+        ctx.fillText(`Your Rank: #${myPlayer.rank}`, width / 2, height * 0.55);
+        ctx.fillText(`Score: ${myPlayer.score}`, width / 2, height * 0.62);
+      }
+    }
+
+    // Restart message
+    ctx.fillStyle = '#888888';
+    ctx.font = '16px Arial';
+    ctx.fillText('New game starting soon...', width / 2, height * 0.75);
+  }
+}

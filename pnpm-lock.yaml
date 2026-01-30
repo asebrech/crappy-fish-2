@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      colyseus.js:
+        specifier: ^0.15.28
+        version: 0.15.28
       next:
         specifier: 16.1.6
         version: 16.1.6(@babel/core@7.28.6)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(sass@1.97.3)
@@ -118,6 +121,10 @@ packages:
   '@babel/types@7.28.6':
     resolution: {integrity: sha512-0ZrskXVEHSWIqZM/sQZ4EV3jZJXRkio/WCxaqKZP1g//CEWEPSfeZFcms4XeKBCHU0ZKnIkdJeU/kF+eRp5lBg==}
     engines: {node: '>=6.9.0'}
+
+  '@colyseus/schema@2.0.37':
+    resolution: {integrity: sha512-+WXEux9DMSaTz9hZKabl6LBuzsxzt9EvOwhXJ/G4rPCaaVkJ+iLxRsq8VbL2ZCx18E/uQH6nLaNIQVqH9wEt8w==}
+    hasBin: true
 
   '@emnapi/core@1.8.1':
     resolution: {integrity: sha512-AvT9QFpxK0Zd8J0jopedNm+w/2fIzvtPKPjqyw9jwvBaReTTqPBk9Hixaz7KbjimP+QNz605/XnjFcDAL2pqBg==}
@@ -895,6 +902,10 @@ packages:
   color-name@1.1.4:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==}
 
+  colyseus.js@0.15.28:
+    resolution: {integrity: sha512-fJx/EcK4fQsugNviXpTD78bVXySutLprViAWy5qMuyhcU0MfeUuHfrlvUqI18dQUStGckvLggTC7EexmIyI+3g==}
+    engines: {node: '>= 12.x'}
+
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
 
@@ -1269,6 +1280,10 @@ packages:
 
   hermes-parser@0.25.1:
     resolution: {integrity: sha512-6pEjquH3rqaI6cYAXYPcz9MS4rY6R4ngRgrgfDshRptUZIc3lw0MCIJIGDj9++mfySOuPTHB4nrSW99BCvOPIA==}
+
+  httpie@2.0.0-next.13:
+    resolution: {integrity: sha512-KbKOnq8wt0hVEfteYCSnEsPgzaWxcVc4qZ4OaDU9mVOYLRo3XChjWs3MiuRgFu5y+4JDo7sDKdKzkAn1ljQYFA==}
+    engines: {node: '>=10'}
 
   ignore@5.3.2:
     resolution: {integrity: sha512-hsBTNUqQTDwkWtcdYI2i06Y/nUBEsNEDJKjWdigLvegy8kDuJAS8uRlpkkcQpyEXL0Z/pjDy5HBmMjRCJ2gq+g==}
@@ -1992,6 +2007,18 @@ packages:
     resolution: {integrity: sha512-BN22B5eaMMI9UMtjrGd5g5eCYPpCPDUy0FJXbYsaT5zYxjFOckS53SQDE3pWkVoWpHXVb3BrYcEN4Twa55B5cA==}
     engines: {node: '>=0.10.0'}
 
+  ws@8.19.0:
+    resolution: {integrity: sha512-blAT2mjOEIi0ZzruJfIhb3nps74PRWTCz1IjglWEEpQl5XS/UNama6u2/rjFkDDouqr4L67ry+1aGIALViWjDg==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
   yallist@3.1.1:
     resolution: {integrity: sha512-a4UGQaWPH59mOXUYnAG2ewncQS4i4F43Tv3JoAM+s2VDAmS9NsK8GpDMLrCHPksFT7h3K6TOoUNn2pb7RoXx4g==}
 
@@ -2111,6 +2138,8 @@ snapshots:
     dependencies:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.28.5
+
+  '@colyseus/schema@2.0.37': {}
 
   '@emnapi/core@1.8.1':
     dependencies:
@@ -2824,6 +2853,16 @@ snapshots:
 
   color-name@1.1.4: {}
 
+  colyseus.js@0.15.28:
+    dependencies:
+      '@colyseus/schema': 2.0.37
+      httpie: 2.0.0-next.13
+      tslib: 2.8.1
+      ws: 8.19.0
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
   concat-map@0.0.1: {}
 
   convert-source-map@2.0.0: {}
@@ -3346,6 +3385,8 @@ snapshots:
   hermes-parser@0.25.1:
     dependencies:
       hermes-estree: 0.25.1
+
+  httpie@2.0.0-next.13: {}
 
   ignore@5.3.2: {}
 
@@ -4181,6 +4222,8 @@ snapshots:
       isexe: 2.0.0
 
   word-wrap@1.2.5: {}
+
+  ws@8.19.0: {}
 
   yallist@3.1.1: {}
 
