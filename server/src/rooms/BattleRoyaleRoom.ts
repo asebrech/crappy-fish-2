@@ -11,7 +11,7 @@ const PIPE_MAX_Y = 0.7;
 const BIRD_COLORS = ["yellow", "red", "blue"];
 const MIN_PLAYERS_TO_START = process.env.DEBUG_MODE === "true" ? 1 : 2;
 const MAX_PLAYERS = 20;
-const COUNTDOWN_SECONDS = 5;
+const COUNTDOWN_SECONDS = process.env.DEBUG_MODE === "true" ? 0 : 5; // Skip countdown in debug mode
 const TICK_RATE = 60; // 60 FPS
 
 // Multi-hole pipe configuration
@@ -117,6 +117,12 @@ export class BattleRoyaleRoom extends Room<BattleRoyaleState> {
     
     this.state.phase = "countdown";
     this.state.countdown = COUNTDOWN_SECONDS;
+
+    // If countdown is 0 (DEBUG_MODE), start game immediately
+    if (COUNTDOWN_SECONDS === 0) {
+      this.startGame();
+      return;
+    }
 
     this.countdownInterval = setInterval(() => {
       this.state.countdown--;
@@ -410,10 +416,11 @@ export class BattleRoyaleRoom extends Room<BattleRoyaleState> {
       }
     });
 
-    // Reset room after 10 seconds
+    // Reset room immediately in debug mode, or after 10 seconds in production
+    const resetDelay = process.env.DEBUG_MODE === "true" ? 0 : 10000;
     setTimeout(() => {
       this.resetRoom();
-    }, 10000);
+    }, resetDelay);
   }
 
   private resetRoom() {
