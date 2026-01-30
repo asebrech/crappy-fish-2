@@ -10,7 +10,7 @@ const PIPE_GAP_SIZE = 0.18;
 const PIPE_MIN_Y = 0.2;
 const PIPE_MAX_Y = 0.7;
 const BIRD_COLORS = ["yellow", "red", "blue"];
-const MIN_PLAYERS_TO_START = 2;
+const MIN_PLAYERS_TO_START = process.env.DEBUG_MODE === "true" ? 1 : 2;
 const MAX_PLAYERS = 20;
 const COUNTDOWN_SECONDS = 5;
 const TICK_RATE = 60; // 60 FPS
@@ -307,7 +307,11 @@ export class BattleRoyaleRoom extends Room<BattleRoyaleState> {
 
     const alivePlayers = this.countAlivePlayers();
     
-    if (alivePlayers <= 1) {
+    // In debug mode, game only ends when all players are dead
+    // In normal mode, game ends when 1 or fewer players remain
+    const minPlayersToEnd = process.env.DEBUG_MODE === "true" ? 0 : 1;
+    
+    if (alivePlayers <= minPlayersToEnd) {
       this.endGame();
     }
   }
