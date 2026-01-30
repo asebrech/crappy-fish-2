@@ -42,7 +42,7 @@ export const BIRD_MAX_ROTATION = 90;
 export const BIRD_MIN_ROTATION = -19;
 
 // Height of bird. Based on canvas Height
-export const BIRD_HEIGHT = 0.024;
+export const BIRD_HEIGHT = 0.04;
 
 // Weight of bird. Drag every update. Based on canvas height
 export const BIRD_WEIGHT = 0.00047;
@@ -58,8 +58,8 @@ export const BIRD_MAX_DOWN_VELOCITY = 0.0141;
  * We are keeping the ratio of the bird to prevent ugly looking squish or squash image of bird
  */
 export const BIRD_INITIAL_DIMENSION: IDimension = {
-  width: 34,
-  height: 24
+  width: 125,
+  height: 51
 };
 
 /**
@@ -70,7 +70,7 @@ export const BIRD_INITIAL_DIMENSION: IDimension = {
 export const PIPE_DISTANCE = 0.392;
 
 // Holl size of pipe. Based on canvas height. (0 - 1)
-export const PIPE_HOLL_SIZE = 0.184;
+export const PIPE_HOLL_SIZE = 0.28;
 
 // Minimum gap of pipe holl to very top and platform. Based on height. (0 - 1)
 export const PIPE_MIN_GAP = 0.194;

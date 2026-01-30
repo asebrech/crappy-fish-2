@@ -72,7 +72,7 @@ export default (callback: IEmptyFunction): void => {
     sd.cutOut('bird-yellow-up', 6, 982, 34, 24);
     sd.cutOut('bird-yellow-mid', 62, 982, 34, 24);
     sd.cutOut('bird-yellow-down', 118, 982, 34, 24);
-    sd.cutOut('bird-blue-up', 174, 982, 34, 24);
+    sd.cutOut('bird-blue-up', 304, 600, 125, 51);
     sd.cutOut('bird-blue-mid', 230, 658, 34, 24);
     sd.cutOut('bird-blue-down', 230, 710, 34, 24);
     sd.cutOut('bird-red-up', 230, 762, 34, 24);
