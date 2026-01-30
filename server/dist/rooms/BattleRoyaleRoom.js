@@ -16,7 +16,7 @@ const MAX_PLAYERS = 20;
 const COUNTDOWN_SECONDS = 5;
 const TICK_RATE = 60; // 60 FPS
 // Multi-hole pipe configuration
-const MIN_HOLES_PER_PIPE = 2;
+const MIN_HOLES_PER_PIPE = 1;
 const MAX_HOLES_PER_PIPE = 3;
 const MIN_HOLE_SPACING = 0.25; // Minimum vertical spacing between holes
 const MIN_HOLE_SIZE = 0.15;
