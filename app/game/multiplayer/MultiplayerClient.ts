@@ -142,15 +142,21 @@ export class MultiplayerClient {
       // Set up listeners for pipes
       if (state.pipes) {
         state.pipes.onAdd((pipe: any, index: number) => {
-          this._state!.pipes[index] = this.pipeToState(pipe);
-
           pipe.onChange(() => {
-            this._state!.pipes[index] = this.pipeToState(pipe);
+            // Rebuild the entire pipes array from server state
+            this._state!.pipes = [];
+            state.pipes.forEach((p: any) => {
+              this._state!.pipes.push(this.pipeToState(p));
+            });
           });
         });
 
-        state.pipes.onRemove((pipe: any, index: number) => {
-          this._state!.pipes.splice(index, 1);
+        state.pipes.onRemove(() => {
+          // Rebuild the entire pipes array from server state
+          this._state!.pipes = [];
+          state.pipes.forEach((p: any) => {
+            this._state!.pipes.push(this.pipeToState(p));
+          });
         });
       }
 

@@ -4,7 +4,8 @@
   "description": "Flappy Bird Battle Royale - Colyseus Server",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "DEBUG_MODE=true tsx watch src/index.ts",
+    "dev:prod": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js"
   },
