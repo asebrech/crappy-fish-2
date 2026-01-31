@@ -372,7 +372,7 @@ export default function BattleRoyaleGame({ serverUrl = 'ws://localhost:2567' }: 
           )}
 
           <div style={{ color: '#666', fontSize: '12px', marginTop: '10px' }}>
-            Press Space or Click to flap
+            Press Space or Click to crap
           </div>
         </div>
       )}
