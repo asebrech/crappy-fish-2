@@ -5,17 +5,22 @@
 
 import { GameState, PlayerState, PipeState } from './MultiplayerClient';
 import SpriteDestructor from '../core/lib/sprite-destructor';
+import { WebGLPostProcessor } from '../rendering/WebGLPostProcessor';
 
 // Custom bird sprites (neutral, down, up)
 const CUSTOM_BIRD_SPRITES = ['bird-blue-up', 'bird-blue-mid', 'bird-blue-down'];
 
 export class BattleRoyaleRenderer {
   private canvas: HTMLCanvasElement;
+  private renderCanvas: HTMLCanvasElement; // Offscreen canvas for 2D rendering
   private context: CanvasRenderingContext2D;
   private canvasSize: { width: number; height: number };
   private mySessionId: string = "";
   private animationFrame: number = 0;
   private platformOffset: number = 0;
+
+  // WebGL post-processing
+  private postProcessor: WebGLPostProcessor | null = null;
 
   // Cached sprites
   private birdSprites: Map<string, HTMLImageElement> = new Map();
@@ -27,8 +32,22 @@ export class BattleRoyaleRenderer {
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
-    this.context = canvas.getContext('2d', { alpha: false })!;
     this.canvasSize = { width: canvas.width, height: canvas.height };
+
+    // Create offscreen canvas for 2D rendering
+    this.renderCanvas = document.createElement('canvas');
+    this.renderCanvas.width = canvas.width;
+    this.renderCanvas.height = canvas.height;
+    this.context = this.renderCanvas.getContext('2d', { alpha: false })!;
+    
+    // Initialize WebGL post-processor on the display canvas
+    try {
+      this.postProcessor = new WebGLPostProcessor(this.canvas);
+    } catch (e) {
+      console.error('Failed to initialize WebGL post-processor:', e);
+      // Fallback: use the display canvas for 2D rendering
+      this.context = this.canvas.getContext('2d', { alpha: false })!;
+    }
   }
 
   setSessionId(sessionId: string): void {
@@ -89,6 +108,12 @@ export class BattleRoyaleRenderer {
     this.canvasSize = { width, height };
     this.canvas.width = width;
     this.canvas.height = height;
+    
+    // Also resize offscreen render canvas
+    if (this.renderCanvas) {
+      this.renderCanvas.width = width;
+      this.renderCanvas.height = height;
+    }
   }
 
   render(state: GameState): void {
@@ -115,26 +140,6 @@ export class BattleRoyaleRenderer {
     // Get local player for vision-based effects
     const players = Array.from(state.players.values());
     const myPlayer = players.find(p => p.id === this.mySessionId);
-    
-    // Apply underwater blur CSS filter to canvas based on vision
-    // Only apply during active gameplay when player is alive
-    if (state.phase === "playing" && myPlayer && myPlayer.alive) {
-      const intensity = 1.0 - myPlayer.vision;
-      const blurAmount = Math.round(intensity * 12); // 0-12px blur
-      
-      // Apply CSS filter to the entire canvas
-      this.canvas.style.filter = blurAmount > 0 
-        ? `blur(${blurAmount}px) hue-rotate(${intensity * 20}deg) saturate(${1 + intensity * 0.3})`
-        : 'none';
-      
-      // Debug log
-      if (this.animationFrame % 60 === 0) {
-        console.log('Vision:', myPlayer.vision, 'Blur:', blurAmount + 'px');
-      }
-    } else {
-      // Reset filter during waiting, countdown, finished, or when dead
-      this.canvas.style.filter = 'none';
-    }
 
     // Clear canvas
     ctx.clearRect(0, 0, width, height);
@@ -174,6 +179,36 @@ export class BattleRoyaleRenderer {
 
     // Draw UI overlay
     this.drawUI(ctx, state, width, height);
+
+    // Apply WebGL radial blur post-processing
+    if (this.postProcessor && state.phase === "playing" && myPlayer && myPlayer.alive) {
+      const intensity = 1.0 - myPlayer.vision;
+      
+      // Update blur parameters based on vision
+      this.postProcessor.setParams({
+        intensity: intensity,
+        centerRadius: 0.45,    // 45% clear center area
+        maxBlurRadius: 25.0    // 25px max blur at edges
+      });
+      
+      // Render offscreen Canvas2D output through WebGL shader to display canvas
+      this.postProcessor.render(this.renderCanvas);
+      
+      // Debug log
+      if (this.animationFrame % 60 === 0) {
+        console.log('Vision:', myPlayer.vision.toFixed(2), 'Blur intensity:', intensity.toFixed(2));
+      }
+    } else if (this.postProcessor) {
+      // No blur during waiting, countdown, finished, or when dead
+      this.postProcessor.setParams({ intensity: 0 });
+      this.postProcessor.render(this.renderCanvas);
+    } else {
+      // Fallback: copy renderCanvas to display canvas if WebGL failed
+      const displayCtx = this.canvas.getContext('2d');
+      if (displayCtx) {
+        displayCtx.drawImage(this.renderCanvas, 0, 0);
+      }
+    }
   }
 
   private drawBackground(ctx: CanvasRenderingContext2D, width: number, height: number): void {
