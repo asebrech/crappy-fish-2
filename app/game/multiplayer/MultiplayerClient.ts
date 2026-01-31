@@ -171,22 +171,40 @@ export class MultiplayerClient {
 
       // Set up listeners for pipes
       if (state.pipes) {
-        state.pipes.onAdd((pipe: any, index: number) => {
-          pipe.onChange(() => {
-            // Rebuild the entire pipes array from server state
-            this._state!.pipes = [];
-            state.pipes.forEach((p: any) => {
-              this._state!.pipes.push(this.pipeToState(p));
-            });
-          });
-        });
-
-        state.pipes.onRemove(() => {
-          // Rebuild the entire pipes array from server state
+        // Helper to rebuild pipes array
+        const rebuildPipes = () => {
           this._state!.pipes = [];
           state.pipes.forEach((p: any) => {
             this._state!.pipes.push(this.pipeToState(p));
           });
+        };
+
+        state.pipes.onAdd((pipe: any, index: number) => {
+          // Listen to pipe property changes
+          pipe.onChange(() => {
+            rebuildPipes();
+          });
+
+          // Listen to holes array changes
+          if (pipe.holes) {
+            pipe.holes.onAdd((hole: any, holeIndex: number) => {
+              // Listen to individual hole changes (including itemCollectedBy)
+              hole.onChange(() => {
+                rebuildPipes();
+              });
+              
+              // Listen to itemCollectedBy array changes
+              if (hole.itemCollectedBy) {
+                hole.itemCollectedBy.onAdd(() => {
+                  rebuildPipes();
+                });
+              }
+            });
+          }
+        });
+
+        state.pipes.onRemove(() => {
+          rebuildPipes();
         });
       }
 
