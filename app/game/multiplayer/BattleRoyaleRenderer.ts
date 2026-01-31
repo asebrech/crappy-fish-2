@@ -721,7 +721,7 @@ export class BattleRoyaleRenderer {
     ctx.fillStyle = '#FFD700';
     ctx.font = 'bold 42px Edo';
     ctx.textAlign = 'center';
-    ctx.fillText('CRAPPY FISH 2 : THE RETURN OF THE ANCIENT MASK', width / 2, height * 0.3);
+    ctx.fillText('CRAPPY FISH 2', width / 2, height * 0.3);
 
     // Player count
     ctx.fillStyle = '#FFFFFF';
