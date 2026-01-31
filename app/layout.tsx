@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Crappy Fish 2",
-  description: "Crappy Fish 2 - Battle Royale Game",
+  description: "Crappy Fish 2",
 };
 
 export default function RootLayout({
