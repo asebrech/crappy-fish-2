@@ -59,6 +59,17 @@ export class BattleRoyaleRenderer {
     this.mySessionId = sessionId;
   }
 
+  /**
+   * Check if a player is spectating (joined mid-game and not playing)
+   * Uses multiple signals for robust detection:
+   * - Explicit isSpectating flag from server
+   * - Or: player is dead with no rank (never played in this game)
+   */
+  private isPlayerSpectating(player: PlayerState | undefined): boolean {
+    if (!player) return false;
+    return player.isSpectating || (!player.alive && player.rank === 0);
+  }
+
   onFlap(playerY: number): void {
     // Add gas trail slightly behind player position (x=0.3 in normalized coordinates)
     this.gasTrails.push({
@@ -181,7 +192,7 @@ export class BattleRoyaleRenderer {
 
     // Draw all players (other players first, then local player on top)
     // Skip spectating players - they don't have a bird in the game
-    const otherPlayers = players.filter(p => p.id !== this.mySessionId && !p.isSpectating);
+    const otherPlayers = players.filter(p => p.id !== this.mySessionId && !this.isPlayerSpectating(p));
 
     // Draw other players (slightly transparent)
     otherPlayers.forEach(player => {
@@ -189,7 +200,7 @@ export class BattleRoyaleRenderer {
     });
 
     // Draw local player (if not spectating)
-    if (myPlayer && !myPlayer.isSpectating) {
+    if (myPlayer && !this.isPlayerSpectating(myPlayer)) {
       this.drawBird(ctx, myPlayer, width, height, 1.0);
     }
 
@@ -512,12 +523,24 @@ export class BattleRoyaleRenderer {
     // Draw player name above bird
     if (player.alive) {
       ctx.save();
-      ctx.fillStyle = player.id === this.mySessionId ? '#FFD700' : '#FFFFFF';
-      ctx.strokeStyle = '#000';
-      ctx.lineWidth = 3;
-      ctx.font = 'bold 14px Arial';
+      const isCurrentPlayer = player.id === this.mySessionId;
+      
+      if (isCurrentPlayer) {
+        // Current player: larger, gold text with stronger outline
+        ctx.fillStyle = '#FFD700';
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 4;
+        ctx.font = 'bold 18px Arial';
+      } else {
+        // Other players: smaller, white text
+        ctx.fillStyle = '#FFFFFF';
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+        ctx.font = 'bold 12px Arial';
+      }
+      
       ctx.textAlign = 'center';
-      const nameY = birdY - birdHeight - 5;
+      const nameY = birdY - birdHeight - (isCurrentPlayer ? 8 : 5);
       ctx.strokeText(player.name, birdX, nameY);
       ctx.fillText(player.name, birdX, nameY);
       ctx.restore();
