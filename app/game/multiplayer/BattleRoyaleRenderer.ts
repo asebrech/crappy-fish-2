@@ -171,12 +171,17 @@ export class BattleRoyaleRenderer {
 
     // Detect if player lost a life and trigger flash effect
     if (myPlayer && myPlayer.lives < this.lastLivesCount && myPlayer.alive) {
-      this.lifeFlashEndTime = Date.now() + 300; // Flash for 300ms
+      this.lifeFlashEndTime = Date.now() + 1000; // Flash for 1 second
       this.lastLivesCount = myPlayer.lives;
     }
     
-    // Reset lives counter if game restarted
-    if (myPlayer && state.phase === "countdown") {
+    // Reset lives counter if game restarted or waiting for players
+    if (myPlayer && (state.phase === "countdown" || state.phase === "waiting" || state.phase === "finished")) {
+      this.lastLivesCount = myPlayer.lives;
+    }
+    
+    // Also reset if lives increased (new round started)
+    if (myPlayer && myPlayer.lives > this.lastLivesCount) {
       this.lastLivesCount = myPlayer.lives;
     }
 
@@ -219,7 +224,7 @@ export class BattleRoyaleRenderer {
     
     // Draw red flash overlay when player loses a life
     if (Date.now() < this.lifeFlashEndTime) {
-      const flashAlpha = 0.5 * (this.lifeFlashEndTime - Date.now()) / 300; // Fade out
+      const flashAlpha = 0.5 * (this.lifeFlashEndTime - Date.now()) / 1000; // Fade out over 1 second
       ctx.fillStyle = `rgba(255, 0, 0, ${flashAlpha})`;
       ctx.fillRect(0, 0, width, height);
     }
@@ -793,7 +798,7 @@ export class BattleRoyaleRenderer {
       
       // "-1 LIFE" popup text when player loses a life
       if (Date.now() < this.lifeFlashEndTime) {
-        const popupAlpha = (this.lifeFlashEndTime - Date.now()) / 300; // Fade out
+        const popupAlpha = (this.lifeFlashEndTime - Date.now()) / 1000; // Fade out over 1 second
         const popupY = height * 0.35 - (1 - popupAlpha) * 50; // Rise up as it fades
         
         ctx.save();
