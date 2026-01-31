@@ -30,6 +30,7 @@ export class BattleRoyaleRenderer {
   private birdSprites: Map<string, HTMLImageElement> = new Map();
   private gasBoostSprite: HTMLImageElement | null = null;
   private maskSprite: HTMLImageElement | null = null;
+  private maskDegatSprites: HTMLImageElement[] = []; // mask-degat-0 to mask-degat-5
   private pipeSprites: { top: HTMLImageElement | null; bottom: HTMLImageElement | null } = { top: null, bottom: null };
   private backgroundSprite: HTMLImageElement | null = null;
   private platformSprite: HTMLImageElement | null = null;
@@ -100,6 +101,13 @@ export class BattleRoyaleRenderer {
     // Load mask sprite (collectible item)
     this.maskSprite = new Image();
     this.maskSprite.src = '/game-assets/mask_degeulasse.png';
+
+    // Load mask-degat sprites (worn by player)
+    for (let i = 0; i <= 5; i++) {
+      const img = new Image();
+      img.src = `/game-assets/mask-degat/mask-degat-${i}.png`;
+      this.maskDegatSprites.push(img);
+    }
 
     // Load pipe sprites
     try {
@@ -516,6 +524,50 @@ export class BattleRoyaleRenderer {
       ctx.strokeStyle = '#000';
       ctx.lineWidth = 2;
       ctx.stroke();
+    }
+
+    // Draw mask-degat on player based on vision level
+    // Mask visible from vision 1.0 (full) down to 0.25 (75% blur)
+    // Sprites distribution:
+    //   0-3: Progressive wear (4 sprites, 0.15 vision each) - vision 1.0 → 0.40
+    //   4: Mask breaks! - vision 0.40 → 0.325
+    //   5: Final destruction with fade-out - vision 0.325 → 0.25
+    if (player.alive && player.vision > 0.25) {
+      let maskIndex: number;
+      let maskAlpha = 1.0;
+      
+      if (player.vision > 0.40) {
+        // Sprites 0-3: Progressive wear (vision 1.0 → 0.40)
+        const wearRange = (player.vision - 0.40) / 0.60; // 0 to 1
+        maskIndex = Math.min(3, Math.floor((1 - wearRange) * 4));
+      } else if (player.vision > 0.325) {
+        // Sprite 4: Mask breaks! (vision 0.40 → 0.325)
+        maskIndex = 4;
+      } else {
+        // Sprite 5: Final destruction with fade-out (vision 0.325 → 0.25)
+        maskIndex = 5;
+        // Fade out: vision 0.325 → 0.25 maps to alpha 1.0 → 0.0
+        maskAlpha = (player.vision - 0.25) / 0.075;
+      }
+      
+      const maskSprite = this.maskDegatSprites[maskIndex];
+      if (maskSprite?.complete) {
+        ctx.globalAlpha = maskAlpha;
+        
+        // Add glow effect to make mask more visible
+        ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+        ctx.shadowBlur = 8;
+        
+        const maskWidth = birdWidth * 0.45; // Slightly bigger
+        const maskHeight = maskWidth;
+        const maskOffsetX = -birdWidth * 0.32;
+        ctx.drawImage(maskSprite, maskOffsetX - maskWidth / 2, -maskHeight / 2, maskWidth, maskHeight);
+        
+        // Reset effects
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 1.0;
+      }
     }
 
     ctx.restore();
