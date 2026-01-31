@@ -75,13 +75,22 @@ export class BattleRoyaleRoom extends Room<BattleRoyaleState> {
     player.name = options.name || `Bird${this.state.players.size + 1}`;
     player.color = BIRD_COLORS[this.state.players.size % BIRD_COLORS.length];
     player.y = 0.5;
-    player.alive = true;
+
+    // If game is already in progress (playing or countdown), player becomes a spectator
+    if (this.state.phase === "playing" || this.state.phase === "countdown") {
+      player.alive = false;
+      player.isSpectating = true;
+      console.log(`Player ${client.sessionId} joined as spectator (game in progress)`);
+    } else {
+      player.alive = true;
+      player.isSpectating = false;
+    }
 
     this.state.players.set(client.sessionId, player);
     this.state.totalPlayers = this.state.players.size;
     this.state.playersAlive = this.countAlivePlayers();
 
-    // Check if we should start countdown
+    // Check if we should start countdown (only if not already started)
     this.checkStartConditions();
   }
 
@@ -146,20 +155,22 @@ export class BattleRoyaleRoom extends Room<BattleRoyaleState> {
     
     this.state.phase = "playing";
     this.state.startTime = Date.now();
-    this.state.playersAlive = this.countAlivePlayers();
     
-    // Reset all players
+    // Reset all players (including spectators who will now join the game)
     this.state.players.forEach((player: Player) => {
       player.y = 0.5;
       player.velocityY = 0;
       player.rotation = 0;
       player.score = 0;
       player.alive = true;
+      player.isSpectating = false; // Spectators now become active players
       player.vision = 1.0; // Start with full vision
       player.visionDegradationMultiplier = 1.0; // Reset degradation speed
       player.lives = STARTING_LIVES; // Start with 2 lives
       player.lastHitTime = 0; // Reset hit timer
     });
+
+    this.state.playersAlive = this.countAlivePlayers();
 
     // Clear pipes and generate initial ones
     this.state.pipes.clear();
@@ -476,6 +487,7 @@ export class BattleRoyaleRoom extends Room<BattleRoyaleState> {
       player.rotation = 0;
       player.score = 0;
       player.alive = true;
+      player.isSpectating = false; // All spectators become active for next round
       player.rank = 0;
     });
 

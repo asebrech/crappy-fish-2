@@ -18,6 +18,7 @@ export class Player extends Schema {
   visionDegradationMultiplier: number = 1.0; // Multiplier for vision degradation speed
   lives: number = 2; // Number of lives remaining
   lastHitTime: number = 0; // Timestamp of last hit for invulnerability
+  isSpectating: boolean = false; // True if player joined mid-game and is watching
 }
 
 defineTypes(Player, {
@@ -35,6 +36,7 @@ defineTypes(Player, {
   visionDegradationMultiplier: "number",
   lives: "number",
   lastHitTime: "number",
+  isSpectating: "boolean",
 });
 
 /**

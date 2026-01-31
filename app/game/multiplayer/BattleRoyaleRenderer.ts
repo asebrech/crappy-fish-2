@@ -175,20 +175,21 @@ export class BattleRoyaleRenderer {
     this.drawGasTrails(ctx, width, height);
 
     // Draw all players (other players first, then local player on top)
-    const otherPlayers = players.filter(p => p.id !== this.mySessionId);
+    // Skip spectating players - they don't have a bird in the game
+    const otherPlayers = players.filter(p => p.id !== this.mySessionId && !p.isSpectating);
 
     // Draw other players (slightly transparent)
     otherPlayers.forEach(player => {
       this.drawBird(ctx, player, width, height, 0.7);
     });
 
-    // Draw local player
-    if (myPlayer) {
+    // Draw local player (if not spectating)
+    if (myPlayer && !myPlayer.isSpectating) {
       this.drawBird(ctx, myPlayer, width, height, 1.0);
     }
 
-    // Draw underwater color overlay (tint effect) - only during active gameplay
-    if (state.phase === "playing" && myPlayer && myPlayer.alive) {
+    // Draw underwater color overlay (tint effect) - only during active gameplay (not for spectators)
+    if (state.phase === "playing" && myPlayer && myPlayer.alive && !myPlayer.isSpectating) {
       this.drawUnderwaterTintOverlay(ctx, myPlayer.vision, width, height);
     }
     
@@ -202,8 +203,8 @@ export class BattleRoyaleRenderer {
     // Draw UI overlay
     this.drawUI(ctx, state, width, height);
 
-    // Apply WebGL radial blur post-processing
-    if (this.postProcessor && state.phase === "playing" && myPlayer && myPlayer.alive) {
+    // Apply WebGL radial blur post-processing (not for spectators)
+    if (this.postProcessor && state.phase === "playing" && myPlayer && myPlayer.alive && !myPlayer.isSpectating) {
       const intensity = 1.0 - myPlayer.vision;
       
       // Update blur parameters based on vision (more aggressive settings)
@@ -587,16 +588,35 @@ export class BattleRoyaleRenderer {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
     ctx.fillRect(0, 0, width, height);
 
-    // Countdown number
-    ctx.fillStyle = '#FFD700';
-    ctx.font = 'bold 72px Arial';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(state.countdown.toString(), width / 2, height / 2);
+    // Check if local player is spectating
+    const myPlayer = state.players.get(this.mySessionId);
+    
+    if (myPlayer && myPlayer.isSpectating) {
+      // Spectator joined during countdown
+      ctx.fillStyle = '#FFD700';
+      ctx.font = 'bold 32px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('SPECTATING', width / 2, height * 0.35);
+      
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '24px Arial';
+      ctx.fillText(`Game starting in ${state.countdown}...`, width / 2, height / 2);
+      
+      ctx.fillStyle = '#AAAAAA';
+      ctx.font = '16px Arial';
+      ctx.fillText('You will join the next round', width / 2, height * 0.6);
+    } else {
+      // Normal countdown for active players
+      ctx.fillStyle = '#FFD700';
+      ctx.font = 'bold 72px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(state.countdown.toString(), width / 2, height / 2);
 
-    ctx.font = '24px Arial';
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillText('GET READY!', width / 2, height * 0.35);
+      ctx.font = '24px Arial';
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillText('GET READY!', width / 2, height * 0.35);
+    }
   }
 
   private drawPlayingUI(ctx: CanvasRenderingContext2D, state: GameState, width: number, height: number): void {
@@ -695,6 +715,27 @@ export class BattleRoyaleRenderer {
       ctx.fillStyle = '#FFFFFF';
       ctx.font = '20px Arial';
       ctx.fillText(`Rank: #${myPlayer.rank}`, width / 2, height * 0.55);
+    }
+
+    // Spectator UI - show when player joined mid-game
+    if (myPlayer && myPlayer.isSpectating) {
+      // Semi-transparent overlay at top
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+      ctx.fillRect(0, height * 0.35, width, height * 0.25);
+      
+      // "SPECTATING" banner
+      ctx.fillStyle = '#FFD700';
+      ctx.font = 'bold 32px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('SPECTATING', width / 2, height * 0.45);
+      
+      // Info text
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '18px Arial';
+      ctx.fillText('You joined while a game was in progress', width / 2, height * 0.52);
+      ctx.fillStyle = '#AAAAAA';
+      ctx.font = '16px Arial';
+      ctx.fillText('Waiting for next round...', width / 2, height * 0.57);
     }
   }
 

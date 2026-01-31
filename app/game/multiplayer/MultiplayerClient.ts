@@ -15,6 +15,7 @@ export interface PlayerState {
   vision: number;
   lives: number;
   lastHitTime: number;
+  isSpectating: boolean;
 }
 
 export interface HoleState {
@@ -242,7 +243,8 @@ export class MultiplayerClient {
       eliminatedAt: player.eliminatedAt,
       vision: player.vision,
       lives: player.lives,
-      lastHitTime: player.lastHitTime
+      lastHitTime: player.lastHitTime,
+      isSpectating: player.isSpectating
     };
   }
 
