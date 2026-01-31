@@ -18,8 +18,8 @@ const TICK_RATE = 60; // 60 FPS
 const MIN_HOLES_PER_PIPE = 1;
 const MAX_HOLES_PER_PIPE = 3;
 const MIN_HOLE_SPACING = 0.45; // Minimum vertical spacing between holes (increased from 0.35 for even easier gameplay)
-const MIN_HOLE_SIZE = 0.25; // Increased from 0.20 for much easier gameplay
-const MAX_HOLE_SIZE = 0.30; // Increased from 0.25 for much easier gameplay
+const MIN_HOLE_SIZE = 0.18; // Smaller holes for more challenge
+const MAX_HOLE_SIZE = 0.22; // Smaller holes for more challenge
 const ITEM_SPAWN_CHANCE = 0.5; // 50% chance per pipe (increased from 35% to compensate for faster degradation)
 
 // Vision system configuration
