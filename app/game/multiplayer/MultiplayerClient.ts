@@ -61,12 +61,15 @@ export class MultiplayerClient {
   private onPlayerJoin: PlayerEventCallback | null = null;
   private onPlayerLeave: PlayerEventCallback | null = null;
   private onPlayerDied: PlayerEventCallback | null = null;
+  private onMaskCollected: PlayerEventCallback | null = null;
   private onConnected: (() => void) | null = null;
   private onDisconnected: (() => void) | null = null;
   private onError: ((error: Error) => void) | null = null;
 
   // Track previous alive state for death detection
   private playerAliveStates = new Map<string, boolean>();
+  // Track previous vision for mask collection detection
+  private playerVisionStates = new Map<string, number>();
 
   // Local state cache
   private _state: GameState | null = null;
@@ -143,6 +146,7 @@ export class MultiplayerClient {
           player.onChange(() => {
             const updatedState = this.playerToState(player);
             const wasAlive = this.playerAliveStates.get(sessionId);
+            const previousVision = this.playerVisionStates.get(sessionId) ?? 1.0;
             
             // Debug log for all player state changes
             if (sessionId === this._sessionId) {
@@ -156,7 +160,14 @@ export class MultiplayerClient {
               this.onPlayerDied?.(updatedState, sessionId);
             }
             
+            // Detect mask collection (vision increased significantly - means mask was collected)
+            if (updatedState.vision > previousVision + 0.1) {
+              console.log('[MultiplayerClient] 🎭 Mask collected! Vision:', previousVision.toFixed(2), '→', updatedState.vision.toFixed(2), sessionId === this._sessionId ? '(LOCAL PLAYER)' : '(other)');
+              this.onMaskCollected?.(updatedState, sessionId);
+            }
+            
             this.playerAliveStates.set(sessionId, updatedState.alive);
+            this.playerVisionStates.set(sessionId, updatedState.vision);
             this._state!.players.set(sessionId, updatedState);
           });
         });
@@ -326,6 +337,10 @@ export class MultiplayerClient {
 
   setOnPlayerDied(callback: PlayerEventCallback): void {
     this.onPlayerDied = callback;
+  }
+
+  setOnMaskCollected(callback: PlayerEventCallback): void {
+    this.onMaskCollected = callback;
   }
 
   setOnConnected(callback: () => void): void {
