@@ -291,8 +291,8 @@ export class BattleRoyaleRenderer {
         this.drawPipeSection(ctx, pipeX, lastY, pipeWidth, gapTop - lastY, 'top');
       }
       
-      // Draw item if present and not collected
-      if (hole.hasItem && !hole.itemCollected) {
+      // Draw item if present and not collected by this player
+      if (hole.hasItem && !hole.itemCollectedBy.includes(this.mySessionId)) {
         this.drawItem(ctx, pipeX + pipeWidth / 2, gapCenterY, width);
       }
       

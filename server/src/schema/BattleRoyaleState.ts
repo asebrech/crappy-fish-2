@@ -44,14 +44,14 @@ export class Hole extends Schema {
   y: number = 0.5;           // Hole center Y position (0-1)
   size: number = 0.18;       // Hole size
   hasItem: boolean = false;  // Whether this hole contains an item
-  itemCollected: boolean = false; // Whether item was collected
+  itemCollectedBy = new ArraySchema<string>(); // Array of player IDs who collected this item
 }
 
 defineTypes(Hole, {
   y: "number",
   size: "number",
   hasItem: "boolean",
-  itemCollected: "boolean",
+  itemCollectedBy: ["string"],
 });
 
 /**

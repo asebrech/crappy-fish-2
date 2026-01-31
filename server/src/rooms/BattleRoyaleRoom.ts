@@ -262,7 +262,7 @@ export class BattleRoyaleRoom extends Room<BattleRoyaleState> {
         hole.size = MIN_HOLE_SIZE + sizeFactor * (MAX_HOLE_SIZE - MIN_HOLE_SIZE);
         
         hole.hasItem = false;
-        hole.itemCollected = false;
+        // itemCollectedBy starts as empty array (no initialization needed)
         
         pipe.holes.push(hole);
       }
@@ -348,8 +348,10 @@ export class BattleRoyaleRoom extends Room<BattleRoyaleState> {
             inAnyHole = true;
             
             // Check for item collection (diving mask) - ALWAYS works, even when invulnerable
-            if (hole.hasItem && !hole.itemCollected && birdX > pipe.x) {
-              hole.itemCollected = true;
+            // Each player can collect the same item once
+            const hasCollected = hole.itemCollectedBy.includes(player.id);
+            if (hole.hasItem && !hasCollected && birdX > pipe.x) {
+              hole.itemCollectedBy.push(player.id);
               
               // Fully restore vision (diving mask effect)
               player.vision = 1.0;

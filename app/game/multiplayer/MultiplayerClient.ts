@@ -21,7 +21,7 @@ export interface HoleState {
   y: number;
   size: number;
   hasItem: boolean;
-  itemCollected: boolean;
+  itemCollectedBy: string[]; // Array of player IDs who collected this item
 }
 
 export interface PipeState {
@@ -253,7 +253,7 @@ export class MultiplayerClient {
         y: hole.y,
         size: hole.size,
         hasItem: hole.hasItem,
-        itemCollected: hole.itemCollected
+        itemCollectedBy: Array.from(hole.itemCollectedBy || [])
       })),
       passed: pipe.passed
     };
