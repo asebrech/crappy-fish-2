@@ -307,10 +307,17 @@ export class BattleRoyaleRoom extends Room<BattleRoyaleState> {
   private checkCollisions(player: Player) {
     const isInvulnerable = Date.now() - player.lastHitTime < RESPAWN_INVULNERABILITY_TIME;
     
-    // Floor collision (skip if invulnerable)
-    if (!isInvulnerable && player.y > 0.85) {
-      this.eliminatePlayer(player);
-      return;
+    // Floor collision - bounce back up if invulnerable, eliminate if not
+    if (player.y > 0.85) {
+      if (isInvulnerable) {
+        // Bounce off floor when invulnerable (no damage)
+        player.y = 0.85;
+        player.velocityY = Math.min(0, player.velocityY); // Stop downward movement
+      } else {
+        // Take damage when not invulnerable
+        this.eliminatePlayer(player);
+        return;
+      }
     }
 
     // Ceiling collision (always active, just bounce)
