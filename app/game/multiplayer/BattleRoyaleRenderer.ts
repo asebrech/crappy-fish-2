@@ -29,6 +29,7 @@ export class BattleRoyaleRenderer {
   // Cached sprites
   private birdSprites: Map<string, HTMLImageElement> = new Map();
   private gasBoostSprite: HTMLImageElement | null = null;
+  private maskSprite: HTMLImageElement | null = null;
   private pipeSprites: { top: HTMLImageElement | null; bottom: HTMLImageElement | null } = { top: null, bottom: null };
   private backgroundSprite: HTMLImageElement | null = null;
   private platformSprite: HTMLImageElement | null = null;
@@ -84,6 +85,10 @@ export class BattleRoyaleRenderer {
     } catch (e) {
       console.warn('Failed to load gas boost sprite');
     }
+
+    // Load mask sprite (collectible item)
+    this.maskSprite = new Image();
+    this.maskSprite.src = '/game-assets/mask_degeulasse.png';
 
     // Load pipe sprites
     try {
@@ -335,7 +340,7 @@ export class BattleRoyaleRenderer {
   }
 
   private drawItem(ctx: CanvasRenderingContext2D, x: number, y: number, width: number): void {
-    const itemSize = width * 0.025;
+    const itemSize = width * 0.06; // Bigger size for the mask
     const time = this.animationFrame * 0.1;
     
     ctx.save();
@@ -343,19 +348,22 @@ export class BattleRoyaleRenderer {
     // Pulsing effect
     const pulseScale = 1 + Math.sin(time) * 0.15;
     
-    // Rotation effect
+    // Slight wobble effect (no full rotation for the mask)
+    const wobble = Math.sin(time * 0.8) * 0.1;
+    
     ctx.translate(x, y);
-    ctx.rotate(time * 0.05);
+    ctx.rotate(wobble);
     ctx.scale(pulseScale, pulseScale);
     
-    // Draw golden star
-    this.drawStar(ctx, 0, 0, 5, itemSize, itemSize * 0.5);
-    
-    // Sparkle effect
-    ctx.fillStyle = `rgba(255, 255, 255, ${0.5 + Math.sin(time * 2) * 0.5})`;
-    ctx.beginPath();
-    ctx.arc(itemSize * 0.4, -itemSize * 0.4, itemSize * 0.15, 0, Math.PI * 2);
-    ctx.fill();
+    // Draw the mask sprite
+    if (this.maskSprite && this.maskSprite.complete) {
+      const maskWidth = itemSize * 2;
+      const maskHeight = itemSize * 2;
+      ctx.drawImage(this.maskSprite, -maskWidth / 2, -maskHeight / 2, maskWidth, maskHeight);
+    } else {
+      // Fallback: Draw golden star if mask not loaded
+      this.drawStar(ctx, 0, 0, 5, itemSize, itemSize * 0.5);
+    }
     
     ctx.restore();
   }
