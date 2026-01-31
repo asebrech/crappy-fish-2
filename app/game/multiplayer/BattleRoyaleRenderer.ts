@@ -846,6 +846,14 @@ export class BattleRoyaleRenderer {
       ctx.fillText('VICTORY!', width / 2, height * 0.35);
       ctx.font = 'bold 32px Arial';
       ctx.fillText('#1 WINNER', width / 2, height * 0.45);
+      
+      // Show winner's score
+      const myPlayer = state.players.get(this.mySessionId);
+      if (myPlayer) {
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = '28px Arial';
+        ctx.fillText(`Score: ${myPlayer.score}`, width / 2, height * 0.55);
+      }
     } else {
       // Defeat screen
       ctx.fillStyle = '#FF4444';
