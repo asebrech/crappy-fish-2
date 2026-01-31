@@ -749,30 +749,22 @@ export class BattleRoyaleRenderer {
     // My score (top right)
     if (myPlayer) {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-      ctx.fillRect(width - 120, 10, 110, 50);
+      ctx.fillRect(width - 170, 10, 160, 55);
       ctx.fillStyle = '#FFD700';
-      ctx.font = 'bold 32px Edo';
+      ctx.font = 'bold 38px Edo';
       ctx.textAlign = 'center';
-      ctx.fillText(myPlayer.score.toString(), width - 65, 45);
+      ctx.fillText(`Score: ${myPlayer.score}`, width - 90, 48);
       
-      // Vision indicator (top right, below score)
+      // Lives indicator (top right, below score)
       ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-      ctx.fillRect(width - 120, 70, 110, 35);
-      const visionPercent = Math.round(myPlayer.vision * 100);
-      const visionColor = myPlayer.vision > 0.5 ? '#00FF00' : myPlayer.vision > 0.25 ? '#FFFF00' : '#FF4444';
-      ctx.fillStyle = visionColor;
-      ctx.font = 'bold 22px Edo';
-      ctx.fillText(`Vision: ${visionPercent}%`, width - 65, 95);
-      
-      // Lives indicator (top right, below vision)
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-      ctx.fillRect(width - 120, 115, 110, 40);
+      ctx.fillRect(width - 170, 75, 160, 40);
       
       // Draw hearts based on lives remaining
       const heartSize = 24;
       const heartSpacing = 30;
-      const startX = width - 85;
-      const heartY = 138;
+      // Center 2 hearts: total width = heartSpacing, center of box is width - 90
+      const startX = width - 90 - (heartSpacing / 2);
+      const heartY = 98;
       
       // Check if player is invulnerable (flashing effect)
       const isInvulnerable = Date.now() - myPlayer.lastHitTime < 2000;
