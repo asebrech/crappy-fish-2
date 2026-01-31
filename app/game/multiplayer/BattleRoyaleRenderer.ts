@@ -653,16 +653,16 @@ export class BattleRoyaleRenderer {
 
     // Title
     ctx.fillStyle = '#FFD700';
-    ctx.font = 'bold 32px Arial';
+    ctx.font = 'bold 42px Arial';
     ctx.textAlign = 'center';
     ctx.fillText('CRAPPY FISH 2 ROYALE', width / 2, height * 0.3);
 
     // Player count
     ctx.fillStyle = '#FFFFFF';
-    ctx.font = '24px Arial';
+    ctx.font = '32px Arial';
     ctx.fillText(`Players: ${state.totalPlayers}`, width / 2, height * 0.45);
     ctx.fillText('Waiting for players...', width / 2, height * 0.55);
-    ctx.font = '16px Arial';
+    ctx.font = '22px Arial';
     ctx.fillText('(Need at least 2 players to start)', width / 2, height * 0.65);
   }
 
@@ -677,68 +677,97 @@ export class BattleRoyaleRenderer {
     if (myPlayer && myPlayer.isSpectating) {
       // Spectator joined during countdown
       ctx.fillStyle = '#FFD700';
-      ctx.font = 'bold 32px Arial';
+      ctx.font = 'bold 42px Arial';
       ctx.textAlign = 'center';
       ctx.fillText('SPECTATING', width / 2, height * 0.35);
       
       ctx.fillStyle = '#FFFFFF';
-      ctx.font = '24px Arial';
+      ctx.font = '32px Arial';
       ctx.fillText(`Game starting in ${state.countdown}...`, width / 2, height / 2);
       
       ctx.fillStyle = '#AAAAAA';
-      ctx.font = '16px Arial';
+      ctx.font = '22px Arial';
       ctx.fillText('You will join the next round', width / 2, height * 0.6);
     } else {
       // Normal countdown for active players
       ctx.fillStyle = '#FFD700';
-      ctx.font = 'bold 72px Arial';
+      ctx.font = 'bold 96px Arial';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(state.countdown.toString(), width / 2, height / 2);
 
-      ctx.font = '24px Arial';
+      ctx.font = '32px Arial';
       ctx.fillStyle = '#FFFFFF';
       ctx.fillText('GET READY!', width / 2, height * 0.35);
     }
   }
 
   private drawPlayingUI(ctx: CanvasRenderingContext2D, state: GameState, width: number, height: number): void {
+    const myPlayer = state.players.get(this.mySessionId);
+    
+    // Spectator UI - early return to skip regular playing UI
+    if (this.isPlayerSpectating(myPlayer)) {
+      // Players alive counter (top left) - spectators can still see this
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+      ctx.fillRect(10, 10, 160, 50);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 26px Arial';
+      ctx.textAlign = 'left';
+      ctx.fillText(`Alive: ${state.playersAlive}/${state.totalPlayers}`, 20, 42);
+      
+      // Spectating banner
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+      ctx.fillRect(0, height * 0.35, width, height * 0.25);
+      
+      ctx.fillStyle = '#FFD700';
+      ctx.font = 'bold 42px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('SPECTATING', width / 2, height * 0.45);
+      
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '24px Arial';
+      ctx.fillText('You joined while a game was in progress', width / 2, height * 0.52);
+      ctx.fillStyle = '#AAAAAA';
+      ctx.font = '22px Arial';
+      ctx.fillText('Waiting for next round...', width / 2, height * 0.57);
+      return;
+    }
+    
     // Players alive counter (top left)
     ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-    ctx.fillRect(10, 10, 120, 40);
+    ctx.fillRect(10, 10, 160, 50);
     ctx.fillStyle = '#FFFFFF';
-    ctx.font = 'bold 18px Arial';
+    ctx.font = 'bold 26px Arial';
     ctx.textAlign = 'left';
-    ctx.fillText(`Alive: ${state.playersAlive}/${state.totalPlayers}`, 20, 35);
+    ctx.fillText(`Alive: ${state.playersAlive}/${state.totalPlayers}`, 20, 42);
 
     // My score (top right)
-    const myPlayer = state.players.get(this.mySessionId);
     if (myPlayer) {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-      ctx.fillRect(width - 100, 10, 90, 40);
+      ctx.fillRect(width - 120, 10, 110, 50);
       ctx.fillStyle = '#FFD700';
-      ctx.font = 'bold 24px Arial';
+      ctx.font = 'bold 32px Arial';
       ctx.textAlign = 'center';
-      ctx.fillText(myPlayer.score.toString(), width - 55, 38);
+      ctx.fillText(myPlayer.score.toString(), width - 65, 45);
       
       // Vision indicator (top right, below score)
       ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-      ctx.fillRect(width - 100, 60, 90, 30);
+      ctx.fillRect(width - 120, 70, 110, 35);
       const visionPercent = Math.round(myPlayer.vision * 100);
       const visionColor = myPlayer.vision > 0.5 ? '#00FF00' : myPlayer.vision > 0.25 ? '#FFFF00' : '#FF4444';
       ctx.fillStyle = visionColor;
-      ctx.font = 'bold 16px Arial';
-      ctx.fillText(`Vision: ${visionPercent}%`, width - 55, 80);
+      ctx.font = 'bold 22px Arial';
+      ctx.fillText(`Vision: ${visionPercent}%`, width - 65, 95);
       
       // Lives indicator (top right, below vision)
       ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-      ctx.fillRect(width - 100, 100, 90, 35);
+      ctx.fillRect(width - 120, 115, 110, 40);
       
       // Draw hearts based on lives remaining
-      const heartSize = 20;
-      const heartSpacing = 25;
-      const startX = width - 75;
-      const heartY = 120;
+      const heartSize = 24;
+      const heartSpacing = 30;
+      const startX = width - 85;
+      const heartY = 138;
       
       // Check if player is invulnerable (flashing effect)
       const isInvulnerable = Date.now() - myPlayer.lastHitTime < 2000;
@@ -771,18 +800,18 @@ export class BattleRoyaleRenderer {
         ctx.globalAlpha = popupAlpha;
         ctx.fillStyle = '#FF4444';
         ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 4;
-        ctx.font = 'bold 48px Arial';
+        ctx.lineWidth = 5;
+        ctx.font = 'bold 64px Arial';
         ctx.textAlign = 'center';
         ctx.strokeText('-1 LIFE', width / 2, popupY);
         ctx.fillText('-1 LIFE', width / 2, popupY);
         
         // Show lives remaining
-        ctx.font = 'bold 32px Arial';
+        ctx.font = 'bold 42px Arial';
         ctx.fillStyle = myPlayer.lives > 0 ? '#FFD700' : '#FF4444';
         const remainingText = myPlayer.lives > 0 ? `${myPlayer.lives} LEFT` : 'GAME OVER';
-        ctx.strokeText(remainingText, width / 2, popupY + 50);
-        ctx.fillText(remainingText, width / 2, popupY + 50);
+        ctx.strokeText(remainingText, width / 2, popupY + 60);
+        ctx.fillText(remainingText, width / 2, popupY + 60);
         ctx.restore();
       }
     }
@@ -792,33 +821,12 @@ export class BattleRoyaleRenderer {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
       ctx.fillRect(0, height * 0.4, width, height * 0.2);
       ctx.fillStyle = '#FF4444';
-      ctx.font = 'bold 36px Arial';
+      ctx.font = 'bold 48px Arial';
       ctx.textAlign = 'center';
       ctx.fillText('YOU DIED!', width / 2, height * 0.5);
       ctx.fillStyle = '#FFFFFF';
-      ctx.font = '20px Arial';
-      ctx.fillText(`Rank: #${myPlayer.rank}`, width / 2, height * 0.55);
-    }
-
-    // Spectator UI - show when player joined mid-game
-    if (myPlayer && myPlayer.isSpectating) {
-      // Semi-transparent overlay at top
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-      ctx.fillRect(0, height * 0.35, width, height * 0.25);
-      
-      // "SPECTATING" banner
-      ctx.fillStyle = '#FFD700';
-      ctx.font = 'bold 32px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText('SPECTATING', width / 2, height * 0.45);
-      
-      // Info text
-      ctx.fillStyle = '#FFFFFF';
-      ctx.font = '18px Arial';
-      ctx.fillText('You joined while a game was in progress', width / 2, height * 0.52);
-      ctx.fillStyle = '#AAAAAA';
-      ctx.font = '16px Arial';
-      ctx.fillText('Waiting for next round...', width / 2, height * 0.57);
+      ctx.font = '28px Arial';
+      ctx.fillText(`Rank: #${myPlayer.rank}`, width / 2, height * 0.56);
     }
   }
 
@@ -833,28 +841,28 @@ export class BattleRoyaleRenderer {
     if (isWinner) {
       // Victory screen
       ctx.fillStyle = '#FFD700';
-      ctx.font = 'bold 48px Arial';
+      ctx.font = 'bold 64px Arial';
       ctx.textAlign = 'center';
       ctx.fillText('VICTORY!', width / 2, height * 0.35);
-      ctx.font = 'bold 24px Arial';
+      ctx.font = 'bold 32px Arial';
       ctx.fillText('#1 WINNER', width / 2, height * 0.45);
     } else {
       // Defeat screen
       ctx.fillStyle = '#FF4444';
-      ctx.font = 'bold 36px Arial';
+      ctx.font = 'bold 48px Arial';
       ctx.textAlign = 'center';
       ctx.fillText('GAME OVER', width / 2, height * 0.35);
 
       if (winner) {
         ctx.fillStyle = '#FFFFFF';
-        ctx.font = '24px Arial';
+        ctx.font = '32px Arial';
         ctx.fillText(`Winner: ${winner.name}`, width / 2, height * 0.45);
       }
 
       const myPlayer = state.players.get(this.mySessionId);
       if (myPlayer) {
         ctx.fillStyle = '#AAAAAA';
-        ctx.font = '20px Arial';
+        ctx.font = '28px Arial';
         ctx.fillText(`Your Rank: #${myPlayer.rank}`, width / 2, height * 0.55);
         ctx.fillText(`Score: ${myPlayer.score}`, width / 2, height * 0.62);
       }
@@ -862,7 +870,7 @@ export class BattleRoyaleRenderer {
 
     // Restart message
     ctx.fillStyle = '#888888';
-    ctx.font = '16px Arial';
+    ctx.font = '22px Arial';
     ctx.fillText('New game starting soon...', width / 2, height * 0.75);
   }
 
