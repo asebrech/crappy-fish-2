@@ -23,6 +23,8 @@ export default function BattleRoyaleGame({ serverUrl = 'ws://localhost:2567' }: 
   const jumpSoundsRef = useRef<HTMLAudioElement[]>([]);
   // Death sounds  
   const deathSoundsRef = useRef<HTMLAudioElement[]>([]);
+  // Mask collection sounds
+  const maskSoundsRef = useRef<HTMLAudioElement[]>([]);
   const mainThemeRef = useRef<HTMLAudioElement | null>(null);
   
   useEffect(() => {
@@ -60,13 +62,27 @@ export default function BattleRoyaleGame({ serverUrl = 'ws://localhost:2567' }: 
       return audio;
     });
     
+    // Load mask collection sounds (4 sounds)
+    const maskSoundPaths = [
+      '/game-assets/audio/mask/haroun.ogg',
+      '/game-assets/audio/mask/mask-1.ogg',
+      '/game-assets/audio/mask/mask-2.ogg',
+      '/game-assets/audio/mask/mask-3.ogg'
+    ];
+    maskSoundsRef.current = maskSoundPaths.map(path => {
+      const audio = new Audio(path);
+      audio.preload = 'auto';
+      audio.volume = 1.0;
+      return audio;
+    });
+    
     // Load main theme
     mainThemeRef.current = new Audio('/game-assets/audio/main_theme.ogg');
     mainThemeRef.current.preload = 'auto';
     mainThemeRef.current.loop = true;
     mainThemeRef.current.volume = 0.5;
     
-    console.log('[BattleRoyale] Audio loaded:', jumpSoundsRef.current.length, 'jump sounds,', deathSoundsRef.current.length, 'death sounds, main theme');
+    console.log('[BattleRoyale] Audio loaded:', jumpSoundsRef.current.length, 'jump sounds,', deathSoundsRef.current.length, 'death sounds,', maskSoundsRef.current.length, 'mask sounds, main theme');
     
     // Start main theme on page load (will play after first user interaction)
     const playMainTheme = () => {
@@ -209,6 +225,25 @@ export default function BattleRoyaleGame({ serverUrl = 'ws://localhost:2567' }: 
             }
           } else {
             console.warn('[BattleRoyale] ⚠️ No death sounds loaded!');
+          }
+        }
+      });
+
+      // Listen for mask collection events
+      client.setOnMaskCollected((player, sessionId) => {
+        // Only play sound for local player
+        if (sessionId === client.sessionId) {
+          console.log('[BattleRoyale] 🎭 LOCAL PLAYER COLLECTED MASK! Playing mask sound...');
+          if (maskSoundsRef.current.length > 0) {
+            const randomIndex = Math.floor(Math.random() * maskSoundsRef.current.length);
+            const sound = maskSoundsRef.current[randomIndex];
+            console.log('[BattleRoyale] Selected mask sound index:', randomIndex);
+            sound.currentTime = 0;
+            sound.play()
+              .then(() => console.log('[BattleRoyale] ✅ Mask sound played successfully'))
+              .catch(err => console.error('[BattleRoyale] ❌ Mask sound play failed:', err));
+          } else {
+            console.warn('[BattleRoyale] ⚠️ No mask sounds loaded!');
           }
         }
       });
