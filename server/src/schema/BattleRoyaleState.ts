@@ -15,6 +15,7 @@ export class Player extends Schema {
   rank: number = 0;
   eliminatedAt: number = 0;
   vision: number = 1.0; // Vision clarity (1.0 = clear, 0.0 = blind)
+  visionDegradationMultiplier: number = 1.0; // Multiplier for vision degradation speed
 }
 
 defineTypes(Player, {
@@ -29,6 +30,7 @@ defineTypes(Player, {
   rank: "number",
   eliminatedAt: "number",
   vision: "number",
+  visionDegradationMultiplier: "number",
 });
 
 /**

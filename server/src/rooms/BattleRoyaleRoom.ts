@@ -17,15 +17,16 @@ const TICK_RATE = 60; // 60 FPS
 // Multi-hole pipe configuration
 const MIN_HOLES_PER_PIPE = 1;
 const MAX_HOLES_PER_PIPE = 3;
-const MIN_HOLE_SPACING = 0.35; // Minimum vertical spacing between holes (increased from 0.25 for easier gameplay)
-const MIN_HOLE_SIZE = 0.18; // Increased from 0.15 for easier gameplay
-const MAX_HOLE_SIZE = 0.23; // Increased from 0.2 for easier gameplay
+const MIN_HOLE_SPACING = 0.45; // Minimum vertical spacing between holes (increased from 0.35 for even easier gameplay)
+const MIN_HOLE_SIZE = 0.25; // Increased from 0.20 for much easier gameplay
+const MAX_HOLE_SIZE = 0.30; // Increased from 0.25 for much easier gameplay
 const ITEM_SPAWN_CHANCE = 0.5; // 50% chance per pipe (increased from 35% to compensate for faster degradation)
 
 // Vision system configuration
-const VISION_DEGRADATION_RATE = 0.002; // Vision loss per tick (60 ticks/sec) = ~12% per second = ~7 seconds to reach minimum
+const VISION_DEGRADATION_RATE = 0.002; // Base vision loss per tick (60 ticks/sec)
 const MIN_VISION = 0.05; // Minimum vision - VERY dark (barely able to see)
-const VISION_RESTORE_AMOUNT = 0.7; // How much diving mask restores (increased to compensate)
+const VISION_RESTORE_AMOUNT = 1.0; // Full restore when collecting diving mask
+const DEGRADATION_MULTIPLIER_INCREASE = 0.3; // How much faster degradation gets after each restore (30% faster)
 
 export class BattleRoyaleRoom extends Room<BattleRoyaleState> {
   maxClients = MAX_PLAYERS;
@@ -151,6 +152,7 @@ export class BattleRoyaleRoom extends Room<BattleRoyaleState> {
       player.score = 0;
       player.alive = true;
       player.vision = 1.0; // Start with full vision
+      player.visionDegradationMultiplier = 1.0; // Reset degradation speed
     });
 
     // Clear pipes and generate initial ones
@@ -288,8 +290,9 @@ export class BattleRoyaleRoom extends Room<BattleRoyaleState> {
     player.rotation += (targetRotation - player.rotation) * 0.1;
     player.rotation = Math.max(-20, Math.min(90, player.rotation));
 
-    // Degrade vision over time
-    player.vision = Math.max(MIN_VISION, player.vision - VISION_DEGRADATION_RATE);
+    // Degrade vision over time (gets faster with each restoration)
+    const degradationRate = VISION_DEGRADATION_RATE * player.visionDegradationMultiplier;
+    player.vision = Math.max(MIN_VISION, player.vision - degradationRate);
 
     // Check collisions
     this.checkCollisions(player);
@@ -333,11 +336,14 @@ export class BattleRoyaleRoom extends Room<BattleRoyaleState> {
             if (hole.hasItem && !hole.itemCollected && birdX > pipe.x) {
               hole.itemCollected = true;
               
-              // Restore vision (diving mask effect)
-              player.vision = Math.min(1.0, player.vision + VISION_RESTORE_AMOUNT);
+              // Fully restore vision (diving mask effect)
+              player.vision = 1.0;
+              
+              // Increase degradation speed for next time (gets harder!)
+              player.visionDegradationMultiplier += DEGRADATION_MULTIPLIER_INCREASE;
               
               player.score += 5; // Bonus points for collecting item
-              console.log(`Player ${player.name} collected diving mask! Vision restored to ${(player.vision * 100).toFixed(0)}%`);
+              console.log(`Player ${player.name} collected diving mask! Vision fully restored. Degradation multiplier: ${player.visionDegradationMultiplier.toFixed(2)}x`);
             }
             
             break;
