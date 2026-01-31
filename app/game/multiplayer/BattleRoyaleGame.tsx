@@ -417,24 +417,26 @@ export default function BattleRoyaleGame({ serverUrl = 'ws://localhost:2567' }: 
             }}
           />
 
-          <button
-            onClick={connect}
-            disabled={isConnecting || !playerName.trim()}
+          <img
+            src="/game-assets/title_ui_assets/boutton-play.png"
+            alt="Play"
+            onClick={() => !isConnecting && playerName.trim() && connect()}
             style={{
-              padding: '12px 40px',
-              fontSize: '18px',
-              fontWeight: 'bold',
-              borderRadius: '8px',
-              border: 'none',
-              backgroundColor: isConnecting ? '#666' : '#4CAF50',
-              color: 'white',
-              cursor: isConnecting ? 'wait' : 'pointer',
-              transition: 'background-color 0.2s',
-              fontFamily: 'Edo, Arial, sans-serif'
+              cursor: isConnecting || !playerName.trim() ? 'not-allowed' : 'pointer',
+              opacity: isConnecting || !playerName.trim() ? 0.5 : 1,
+              filter: isConnecting || !playerName.trim() ? 'brightness(0.7)' : 'brightness(1.1)',
+              transition: 'opacity 0.2s, transform 0.1s, filter 0.2s',
+              width: '360px',
+              height: 'auto'
             }}
-          >
-            {isConnecting ? 'Connecting...' : 'PLAY'}
-          </button>
+            onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.95)')}
+            onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+            onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+          />
+
+          {isConnecting && (
+            <div style={{ color: '#aaa', fontSize: '14px' }}>Connecting...</div>
+          )}
 
           {error && (
             <div style={{ color: '#ff6b6b', fontSize: '14px' }}>
