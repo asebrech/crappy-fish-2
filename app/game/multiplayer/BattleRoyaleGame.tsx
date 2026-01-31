@@ -385,19 +385,20 @@ export default function BattleRoyaleGame({ serverUrl = 'ws://localhost:2567' }: 
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
+          justifyContent: 'center',
           gap: '16px',
           color: 'white',
           zIndex: 15,
-          backgroundColor: 'rgba(0,0,0,0.8)',
-          padding: '40px',
-          borderRadius: '16px',
-          fontFamily: 'Edo, Arial, sans-serif'
+          backgroundImage: 'url(/game-assets/title_ui_assets/Menu.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          fontFamily: 'Edo, Arial, sans-serif',
+          aspectRatio: '288 / 512',
+          height: '100%',
+          maxHeight: '100vh',
+          borderRadius: '8px',
+          overflow: 'hidden'
         }}>
-          <h1 style={{ fontSize: '28px', fontWeight: 'bold', color: '#FFD700', margin: 0 }}>
-            CRAPPY FISH 2 ROYALE
-          </h1>
-          <p style={{ color: '#aaa', margin: 0 }}>Battle Royale Edition</p>
-
           <input
             type="text"
             placeholder="Enter your name"
@@ -411,7 +412,8 @@ export default function BattleRoyaleGame({ serverUrl = 'ws://localhost:2567' }: 
               borderRadius: '8px',
               border: 'none',
               outline: 'none',
-              width: '250px',
+              width: '80%',
+              maxWidth: '250px',
               textAlign: 'center',
               fontFamily: 'Edo, Arial, sans-serif'
             }}
@@ -444,7 +446,7 @@ export default function BattleRoyaleGame({ serverUrl = 'ws://localhost:2567' }: 
             </div>
           )}
 
-          <div style={{ color: '#666', fontSize: '12px', marginTop: '10px' }}>
+          <div style={{ color: '#ffffff', fontSize: '20px', marginTop: '10px', fontStyle: 'bold' }}>
             Press Space or Click to crap
           </div>
         </div>
