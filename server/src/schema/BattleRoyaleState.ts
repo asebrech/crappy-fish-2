@@ -16,6 +16,8 @@ export class Player extends Schema {
   eliminatedAt: number = 0;
   vision: number = 1.0; // Vision clarity (1.0 = clear, 0.0 = blind)
   visionDegradationMultiplier: number = 1.0; // Multiplier for vision degradation speed
+  lives: number = 2; // Number of lives remaining
+  lastHitTime: number = 0; // Timestamp of last hit for invulnerability
 }
 
 defineTypes(Player, {
@@ -31,6 +33,8 @@ defineTypes(Player, {
   eliminatedAt: "number",
   vision: "number",
   visionDegradationMultiplier: "number",
+  lives: "number",
+  lastHitTime: "number",
 });
 
 /**

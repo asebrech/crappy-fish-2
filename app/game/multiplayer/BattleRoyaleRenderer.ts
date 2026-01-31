@@ -22,6 +22,10 @@ export class BattleRoyaleRenderer {
   // WebGL post-processing
   private postProcessor: WebGLPostProcessor | null = null;
 
+  // Visual feedback tracking
+  private lastLivesCount: number = 2; // Track lives to detect when player loses a life
+  private lifeFlashEndTime: number = 0; // When to stop the red flash effect
+
   // Cached sprites
   private birdSprites: Map<string, HTMLImageElement> = new Map();
   private gasBoostSprite: HTMLImageElement | null = null;
@@ -141,6 +145,17 @@ export class BattleRoyaleRenderer {
     const players = Array.from(state.players.values());
     const myPlayer = players.find(p => p.id === this.mySessionId);
 
+    // Detect if player lost a life and trigger flash effect
+    if (myPlayer && myPlayer.lives < this.lastLivesCount && myPlayer.alive) {
+      this.lifeFlashEndTime = Date.now() + 300; // Flash for 300ms
+      this.lastLivesCount = myPlayer.lives;
+    }
+    
+    // Reset lives counter if game restarted
+    if (myPlayer && state.phase === "countdown") {
+      this.lastLivesCount = myPlayer.lives;
+    }
+
     // Clear canvas
     ctx.clearRect(0, 0, width, height);
     ctx.imageSmoothingEnabled = false;
@@ -176,6 +191,13 @@ export class BattleRoyaleRenderer {
     if (state.phase === "playing" && myPlayer && myPlayer.alive) {
       this.drawUnderwaterTintOverlay(ctx, myPlayer.vision, width, height);
     }
+    
+    // Draw red flash overlay when player loses a life
+    if (Date.now() < this.lifeFlashEndTime) {
+      const flashAlpha = 0.5 * (this.lifeFlashEndTime - Date.now()) / 300; // Fade out
+      ctx.fillStyle = `rgba(255, 0, 0, ${flashAlpha})`;
+      ctx.fillRect(0, 0, width, height);
+    }
 
     // Draw UI overlay
     this.drawUI(ctx, state, width, height);
@@ -184,11 +206,11 @@ export class BattleRoyaleRenderer {
     if (this.postProcessor && state.phase === "playing" && myPlayer && myPlayer.alive) {
       const intensity = 1.0 - myPlayer.vision;
       
-      // Update blur parameters based on vision
+      // Update blur parameters based on vision (more aggressive settings)
       this.postProcessor.setParams({
         intensity: intensity,
-        centerRadius: 0.45,    // 45% clear center area
-        maxBlurRadius: 25.0    // 25px max blur at edges
+        centerRadius: 0.25,    // Reduced from 0.45 to 0.25 - blur comes much closer to center
+        maxBlurRadius: 40.0    // Increased from 25 to 40px - much stronger blur at edges
       });
       
       // Render offscreen Canvas2D output through WebGL shader to display canvas
@@ -442,12 +464,23 @@ export class BattleRoyaleRenderer {
     const birdWidth = width * 0.25; // GIGANTIC BIRD MODE 🐦
     const birdHeight = birdWidth * 0.45; // Fixed aspect ratio (avg of sprites: ~125x55 → 0.44)
 
+    // Check if player is invulnerable
+    const isInvulnerable = Date.now() - player.lastHitTime < 2000;
+    const glowIntensity = isInvulnerable ? (Math.sin(Date.now() / 100) * 0.5 + 0.5) : 0;
+
     // Get wing state based on animation (use custom sprite instead of color-based)
     const wingState = player.alive ? Math.floor(this.animationFrame / 5) % 3 : 1;
     const spriteKey = `custom.${wingState}`;
     const sprite = this.birdSprites.get(spriteKey);
 
     ctx.save();
+    
+    // Add glowing effect when invulnerable
+    if (isInvulnerable && player.alive) {
+      ctx.shadowColor = '#FFD700';
+      ctx.shadowBlur = 20 + glowIntensity * 15;
+    }
+    
     ctx.globalAlpha = player.alive ? alpha : 0.4;
     ctx.translate(birdX, birdY);
     ctx.rotate((player.rotation * Math.PI) / 180);
@@ -480,6 +513,31 @@ export class BattleRoyaleRenderer {
       ctx.fillText(player.name, birdX, nameY);
       ctx.restore();
     }
+  }
+
+  private drawHeart(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, filled: boolean): void {
+    ctx.save();
+    
+    // Scale for heart size
+    const scale = size / 20;
+    ctx.translate(x, y);
+    ctx.scale(scale, scale);
+    
+    // Draw heart shape
+    ctx.beginPath();
+    ctx.moveTo(0, 3);
+    ctx.bezierCurveTo(-10, -5, -10, -10, 0, -15);
+    ctx.bezierCurveTo(10, -10, 10, -5, 0, 3);
+    
+    if (filled) {
+      ctx.fill();
+    } else {
+      ctx.strokeStyle = ctx.fillStyle;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+    
+    ctx.restore();
   }
 
   private drawUI(ctx: CanvasRenderingContext2D, state: GameState, width: number, height: number): void {
@@ -568,6 +626,62 @@ export class BattleRoyaleRenderer {
       ctx.fillStyle = visionColor;
       ctx.font = 'bold 16px Arial';
       ctx.fillText(`Vision: ${visionPercent}%`, width - 55, 80);
+      
+      // Lives indicator (top right, below vision)
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+      ctx.fillRect(width - 100, 100, 90, 35);
+      
+      // Draw hearts based on lives remaining
+      const heartSize = 20;
+      const heartSpacing = 25;
+      const startX = width - 75;
+      const heartY = 120;
+      
+      // Check if player is invulnerable (flashing effect)
+      const isInvulnerable = Date.now() - myPlayer.lastHitTime < 2000;
+      const flash = isInvulnerable && Math.floor(Date.now() / 200) % 2 === 0;
+      
+      for (let i = 0; i < 2; i++) {
+        const x = startX + (i * heartSpacing);
+        
+        if (i < myPlayer.lives) {
+          // Full heart - alive
+          if (myPlayer.lives === 2) {
+            ctx.fillStyle = flash ? '#FFD700' : '#00FF00'; // Green hearts (or gold when flashing)
+          } else if (myPlayer.lives === 1) {
+            ctx.fillStyle = flash ? '#FFD700' : '#FF9900'; // Orange heart (or gold when flashing)
+          }
+          this.drawHeart(ctx, x, heartY, heartSize, true);
+        } else {
+          // Empty heart - lost
+          ctx.fillStyle = '#444444';
+          this.drawHeart(ctx, x, heartY, heartSize, false);
+        }
+      }
+      
+      // "-1 LIFE" popup text when player loses a life
+      if (Date.now() < this.lifeFlashEndTime) {
+        const popupAlpha = (this.lifeFlashEndTime - Date.now()) / 300; // Fade out
+        const popupY = height * 0.35 - (1 - popupAlpha) * 50; // Rise up as it fades
+        
+        ctx.save();
+        ctx.globalAlpha = popupAlpha;
+        ctx.fillStyle = '#FF4444';
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 4;
+        ctx.font = 'bold 48px Arial';
+        ctx.textAlign = 'center';
+        ctx.strokeText('-1 LIFE', width / 2, popupY);
+        ctx.fillText('-1 LIFE', width / 2, popupY);
+        
+        // Show lives remaining
+        ctx.font = 'bold 32px Arial';
+        ctx.fillStyle = myPlayer.lives > 0 ? '#FFD700' : '#FF4444';
+        const remainingText = myPlayer.lives > 0 ? `${myPlayer.lives} LEFT` : 'GAME OVER';
+        ctx.strokeText(remainingText, width / 2, popupY + 50);
+        ctx.fillText(remainingText, width / 2, popupY + 50);
+        ctx.restore();
+      }
     }
 
     // "YOU DIED" message if eliminated

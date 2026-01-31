@@ -28,6 +28,10 @@ const MIN_VISION = 0.05; // Minimum vision - VERY dark (barely able to see)
 const VISION_RESTORE_AMOUNT = 1.0; // Full restore when collecting diving mask
 const DEGRADATION_MULTIPLIER_INCREASE = 0.3; // How much faster degradation gets after each restore (30% faster)
 
+// Lives system configuration
+const STARTING_LIVES = 2; // Players start with 2 lives
+const RESPAWN_INVULNERABILITY_TIME = 2000; // 2 seconds invulnerability after losing a life (in milliseconds)
+
 export class BattleRoyaleRoom extends Room<BattleRoyaleState> {
   maxClients = MAX_PLAYERS;
   private gameLoopInterval: NodeJS.Timeout | null = null;
@@ -153,6 +157,8 @@ export class BattleRoyaleRoom extends Room<BattleRoyaleState> {
       player.alive = true;
       player.vision = 1.0; // Start with full vision
       player.visionDegradationMultiplier = 1.0; // Reset degradation speed
+      player.lives = STARTING_LIVES; // Start with 2 lives
+      player.lastHitTime = 0; // Reset hit timer
     });
 
     // Clear pipes and generate initial ones
@@ -299,6 +305,11 @@ export class BattleRoyaleRoom extends Room<BattleRoyaleState> {
   }
 
   private checkCollisions(player: Player) {
+    // Skip collision check if player is invulnerable (just respawned)
+    if (Date.now() - player.lastHitTime < RESPAWN_INVULNERABILITY_TIME) {
+      return;
+    }
+    
     // Floor collision
     if (player.y > 0.85) {
       this.eliminatePlayer(player);
@@ -368,13 +379,30 @@ export class BattleRoyaleRoom extends Room<BattleRoyaleState> {
   private eliminatePlayer(player: Player) {
     if (!player.alive) return;
     
-    player.alive = false;
-    player.eliminatedAt = Date.now();
-    player.rank = this.state.playersAlive;
+    // Reduce lives by 1
+    player.lives = Math.max(0, player.lives - 1);
+    player.lastHitTime = Date.now();
     
-    this.state.playersAlive = this.countAlivePlayers();
-    
-    console.log(`Player ${player.name} eliminated! ${this.state.playersAlive} players remaining.`);
+    if (player.lives > 0) {
+      // Player still has lives remaining - respawn them
+      console.log(`Player ${player.name} lost a life! ${player.lives} lives remaining.`);
+      
+      // Respawn at middle of screen with reset velocity
+      player.y = 0.5;
+      player.velocityY = 0;
+      player.rotation = 0;
+      
+      // Grant 2 seconds of invulnerability (handled in checkCollisions)
+    } else {
+      // No lives remaining - fully eliminate player
+      console.log(`Player ${player.name} eliminated! ${this.state.playersAlive - 1} players remaining.`);
+      
+      player.alive = false;
+      player.eliminatedAt = Date.now();
+      player.rank = this.state.playersAlive;
+      
+      this.state.playersAlive = this.countAlivePlayers();
+    }
   }
 
   private handleFlap(sessionId: string) {

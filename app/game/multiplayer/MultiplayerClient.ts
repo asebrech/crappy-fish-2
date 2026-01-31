@@ -13,6 +13,8 @@ export interface PlayerState {
   rank: number;
   eliminatedAt: number;
   vision: number;
+  lives: number;
+  lastHitTime: number;
 }
 
 export interface HoleState {
@@ -218,7 +220,9 @@ export class MultiplayerClient {
       alive: player.alive,
       rank: player.rank,
       eliminatedAt: player.eliminatedAt,
-      vision: player.vision
+      vision: player.vision,
+      lives: player.lives,
+      lastHitTime: player.lastHitTime
     };
   }
 

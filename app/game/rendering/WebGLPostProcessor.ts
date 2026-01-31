@@ -31,9 +31,10 @@ uniform float u_maxBlurRadius;  // max blur in pixels (25.0)
 
 varying vec2 v_texCoord;
 
-// easeOut curve for smooth falloff
+// easeOut curve for smooth falloff - more aggressive for stronger blur effect
 float easeOut(float t) {
-    return 1.0 - pow(1.0 - t, 3.0);
+    // Changed from cubic to quintic for more aggressive falloff
+    return 1.0 - pow(1.0 - t, 2.0);
 }
 
 // Optimized Gaussian blur using smart sampling
@@ -45,11 +46,11 @@ vec4 gaussianBlur(sampler2D tex, vec2 uv, vec2 direction, float blurAmount) {
     vec4 color = vec4(0.0);
     vec2 pixelSize = 1.0 / u_resolution;
     
-    // Dynamic sample count based on blur amount (performance optimization)
-    int samples = int(clamp(blurAmount * 0.5, 3.0, 12.0));
+    // Dynamic sample count based on blur amount (increased for more visible blur)
+    int samples = int(clamp(blurAmount * 0.7, 6.0, 16.0));
     
-    // Gaussian weights for quality blur
-    float weights[12];
+    // Gaussian weights for quality blur (extended for more samples)
+    float weights[16];
     weights[0] = 0.2270270270;
     weights[1] = 0.1945945946;
     weights[2] = 0.1216216216;
@@ -62,16 +63,20 @@ vec4 gaussianBlur(sampler2D tex, vec2 uv, vec2 direction, float blurAmount) {
     weights[9] = 0.0006756757;
     weights[10] = 0.0003378378;
     weights[11] = 0.0001689189;
+    weights[12] = 0.0000844594;
+    weights[13] = 0.0000422297;
+    weights[14] = 0.0000211149;
+    weights[15] = 0.0000105574;
     
     // Center sample
     color += texture2D(tex, uv) * weights[0];
     float totalWeight = weights[0];
     
     // Sample in both directions
-    for (int i = 1; i < 12; i++) {
+    for (int i = 1; i < 16; i++) {
         if (i >= samples) break;
         
-        float offset = float(i) * blurAmount * 0.5;
+        float offset = float(i) * blurAmount * 0.7; // Increased from 0.5 for wider blur spread
         vec2 sampleOffset = direction * pixelSize * offset;
         
         color += texture2D(tex, uv + sampleOffset) * weights[i];
