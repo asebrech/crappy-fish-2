@@ -393,7 +393,7 @@ export default function BattleRoyaleGame({ serverUrl = 'ws://localhost:2567' }: 
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           fontFamily: 'Edo, Arial, sans-serif',
-          aspectRatio: '288 / 512',
+          aspectRatio: '320 / 512',
           height: '100%',
           maxHeight: '100vh',
           borderRadius: '8px',
@@ -446,7 +446,7 @@ export default function BattleRoyaleGame({ serverUrl = 'ws://localhost:2567' }: 
             </div>
           )}
 
-          <div style={{ color: '#ffffff', fontSize: '20px', marginTop: '10px', fontStyle: 'bold' }}>
+          <div style={{ color: '#ffffff', fontSize: '32px', marginTop: '10px', fontStyle: 'bold', WebkitTextStroke: '0.5px rgb(0, 0, 0)' as any }}>
             Press Space or Click to crap
           </div>
         </div>
