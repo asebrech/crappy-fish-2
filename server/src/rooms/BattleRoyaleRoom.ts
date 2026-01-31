@@ -305,24 +305,21 @@ export class BattleRoyaleRoom extends Room<BattleRoyaleState> {
   }
 
   private checkCollisions(player: Player) {
-    // Skip collision check if player is invulnerable (just respawned)
-    if (Date.now() - player.lastHitTime < RESPAWN_INVULNERABILITY_TIME) {
-      return;
-    }
+    const isInvulnerable = Date.now() - player.lastHitTime < RESPAWN_INVULNERABILITY_TIME;
     
-    // Floor collision
-    if (player.y > 0.85) {
+    // Floor collision (skip if invulnerable)
+    if (!isInvulnerable && player.y > 0.85) {
       this.eliminatePlayer(player);
       return;
     }
 
-    // Ceiling collision
+    // Ceiling collision (always active, just bounce)
     if (player.y < 0.02) {
       player.y = 0.02;
       player.velocityY = 0;
     }
 
-    // Pipe collision
+    // Pipe collision and item collection
     const birdX = 0.3; // Bird X position (constant)
     const birdSize = 0.03; // Bird hitbox size
 
@@ -343,7 +340,7 @@ export class BattleRoyaleRoom extends Room<BattleRoyaleState> {
           if (player.y - birdSize >= gapTop && player.y + birdSize <= gapBottom) {
             inAnyHole = true;
             
-            // Check for item collection (diving mask)
+            // Check for item collection (diving mask) - ALWAYS works, even when invulnerable
             if (hole.hasItem && !hole.itemCollected && birdX > pipe.x) {
               hole.itemCollected = true;
               
@@ -361,8 +358,8 @@ export class BattleRoyaleRoom extends Room<BattleRoyaleState> {
           }
         }
         
-        // If not in any hole, collision with pipe!
-        if (!inAnyHole) {
+        // If not in any hole, collision with pipe! (skip damage if invulnerable)
+        if (!inAnyHole && !isInvulnerable) {
           this.eliminatePlayer(player);
           return;
         }
