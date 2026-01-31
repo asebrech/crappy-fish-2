@@ -529,18 +529,18 @@ export class BattleRoyaleRenderer {
         // Current player: larger, gold text with stronger outline
         ctx.fillStyle = '#FFD700';
         ctx.strokeStyle = '#000';
-        ctx.lineWidth = 4;
-        ctx.font = 'bold 18px Arial';
+        ctx.lineWidth = 5;
+        ctx.font = 'bold 32px Arial';
       } else {
         // Other players: smaller, white text
         ctx.fillStyle = '#FFFFFF';
         ctx.strokeStyle = '#000';
-        ctx.lineWidth = 2;
-        ctx.font = 'bold 12px Arial';
+        ctx.lineWidth = 4;
+        ctx.font = 'bold 24px Arial';
       }
       
       ctx.textAlign = 'center';
-      const nameY = birdY - birdHeight - (isCurrentPlayer ? 8 : 5);
+      const nameY = birdY - birdHeight - (isCurrentPlayer ? 16 : 10);
       ctx.strokeText(player.name, birdX, nameY);
       ctx.fillText(player.name, birdX, nameY);
       ctx.restore();
