@@ -23,6 +23,8 @@ export default function BattleRoyaleGame({ serverUrl = 'ws://localhost:2567' }: 
   const jumpSoundsRef = useRef<HTMLAudioElement[]>([]);
   // Death sounds  
   const deathSoundsRef = useRef<HTMLAudioElement[]>([]);
+  // Scream sounds (when losing a life but not game over)
+  const screamSoundsRef = useRef<HTMLAudioElement[]>([]);
   // Mask collection sounds
   const maskSoundsRef = useRef<HTMLAudioElement[]>([]);
   const mainThemeRef = useRef<HTMLAudioElement | null>(null);
@@ -56,6 +58,18 @@ export default function BattleRoyaleGame({ serverUrl = 'ws://localhost:2567' }: 
       '/game-assets/audio/death/death-9.ogg'
     ];
     deathSoundsRef.current = deathSoundPaths.map(path => {
+      const audio = new Audio(path);
+      audio.preload = 'auto';
+      audio.volume = 1.0;
+      return audio;
+    });
+    
+    // Load scream sounds (when losing a life)
+    const screamSoundPaths = [
+      '/game-assets/audio/scream/scream.ogg',
+      '/game-assets/audio/scream/scream2.ogg'
+    ];
+    screamSoundsRef.current = screamSoundPaths.map(path => {
       const audio = new Audio(path);
       audio.preload = 'auto';
       audio.volume = 1.0;
@@ -225,6 +239,25 @@ export default function BattleRoyaleGame({ serverUrl = 'ws://localhost:2567' }: 
             }
           } else {
             console.warn('[BattleRoyale] ⚠️ No death sounds loaded!');
+          }
+        }
+      });
+
+      // Listen for life lost events (hit but not game over)
+      client.setOnLifeLost((player, sessionId) => {
+        // Only play sound for local player
+        if (sessionId === client.sessionId) {
+          console.log('[BattleRoyale] 💔 LOCAL PLAYER LOST A LIFE! Playing scream sound...');
+          if (screamSoundsRef.current.length > 0) {
+            const randomIndex = Math.floor(Math.random() * screamSoundsRef.current.length);
+            const sound = screamSoundsRef.current[randomIndex];
+            console.log('[BattleRoyale] Selected scream sound index:', randomIndex);
+            sound.currentTime = 0;
+            sound.play()
+              .then(() => console.log('[BattleRoyale] ✅ Scream sound played successfully'))
+              .catch(err => console.error('[BattleRoyale] ❌ Scream sound play failed:', err));
+          } else {
+            console.warn('[BattleRoyale] ⚠️ No scream sounds loaded!');
           }
         }
       });

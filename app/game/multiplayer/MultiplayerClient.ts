@@ -61,6 +61,7 @@ export class MultiplayerClient {
   private onPlayerJoin: PlayerEventCallback | null = null;
   private onPlayerLeave: PlayerEventCallback | null = null;
   private onPlayerDied: PlayerEventCallback | null = null;
+  private onLifeLost: PlayerEventCallback | null = null;
   private onMaskCollected: PlayerEventCallback | null = null;
   private onConnected: (() => void) | null = null;
   private onDisconnected: (() => void) | null = null;
@@ -70,6 +71,8 @@ export class MultiplayerClient {
   private playerAliveStates = new Map<string, boolean>();
   // Track previous vision for mask collection detection
   private playerVisionStates = new Map<string, number>();
+  // Track previous lives for life lost detection
+  private playerLivesStates = new Map<string, number>();
 
   // Local state cache
   private _state: GameState | null = null;
@@ -147,17 +150,24 @@ export class MultiplayerClient {
             const updatedState = this.playerToState(player);
             const wasAlive = this.playerAliveStates.get(sessionId);
             const previousVision = this.playerVisionStates.get(sessionId) ?? 1.0;
+            const previousLives = this.playerLivesStates.get(sessionId) ?? 2;
             
             // Debug log for all player state changes
             if (sessionId === this._sessionId) {
               console.log('[MultiplayerClient] Local player state change - alive:', updatedState.alive, 'wasAlive:', wasAlive);
             }
             
-            // Detect death transition (was alive, now dead)
+            // Detect death transition (was alive, now dead) - GAME OVER
             if (wasAlive === true && updatedState.alive === false) {
               console.log('[MultiplayerClient] ☠️ Player died detected:', sessionId, sessionId === this._sessionId ? '(LOCAL PLAYER)' : '(other)');
               console.log('[MultiplayerClient] onPlayerDied callback exists:', !!this.onPlayerDied);
               this.onPlayerDied?.(updatedState, sessionId);
+            }
+            
+            // Detect life lost (lives decreased but still alive) - HIT but not dead
+            if (updatedState.lives < previousLives && updatedState.alive) {
+              console.log('[MultiplayerClient] 💔 Life lost!', previousLives, '→', updatedState.lives, sessionId === this._sessionId ? '(LOCAL PLAYER)' : '(other)');
+              this.onLifeLost?.(updatedState, sessionId);
             }
             
             // Detect mask collection (vision increased significantly - means mask was collected)
@@ -168,6 +178,7 @@ export class MultiplayerClient {
             
             this.playerAliveStates.set(sessionId, updatedState.alive);
             this.playerVisionStates.set(sessionId, updatedState.vision);
+            this.playerLivesStates.set(sessionId, updatedState.lives);
             this._state!.players.set(sessionId, updatedState);
           });
         });
@@ -337,6 +348,10 @@ export class MultiplayerClient {
 
   setOnPlayerDied(callback: PlayerEventCallback): void {
     this.onPlayerDied = callback;
+  }
+
+  setOnLifeLost(callback: PlayerEventCallback): void {
+    this.onLifeLost = callback;
   }
 
   setOnMaskCollected(callback: PlayerEventCallback): void {
