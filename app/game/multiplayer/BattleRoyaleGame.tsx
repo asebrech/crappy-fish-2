@@ -390,7 +390,8 @@ export default function BattleRoyaleGame({ serverUrl = 'ws://localhost:2567' }: 
           zIndex: 15,
           backgroundColor: 'rgba(0,0,0,0.8)',
           padding: '40px',
-          borderRadius: '16px'
+          borderRadius: '16px',
+          fontFamily: 'Edo, Arial, sans-serif'
         }}>
           <h1 style={{ fontSize: '28px', fontWeight: 'bold', color: '#FFD700', margin: 0 }}>
             CRAPPY FISH 2 ROYALE
@@ -411,7 +412,8 @@ export default function BattleRoyaleGame({ serverUrl = 'ws://localhost:2567' }: 
               border: 'none',
               outline: 'none',
               width: '250px',
-              textAlign: 'center'
+              textAlign: 'center',
+              fontFamily: 'Edo, Arial, sans-serif'
             }}
           />
 
@@ -427,7 +429,8 @@ export default function BattleRoyaleGame({ serverUrl = 'ws://localhost:2567' }: 
               backgroundColor: isConnecting ? '#666' : '#4CAF50',
               color: 'white',
               cursor: isConnecting ? 'wait' : 'pointer',
-              transition: 'background-color 0.2s'
+              transition: 'background-color 0.2s',
+              fontFamily: 'Edo, Arial, sans-serif'
             }}
           >
             {isConnecting ? 'Connecting...' : 'PLAY'}
