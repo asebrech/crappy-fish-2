@@ -596,6 +596,7 @@ export class BattleRoyaleRenderer {
   private drawGasTrails(ctx: CanvasRenderingContext2D, width: number, height: number): void {
     if (!this.gasBoostSprite) return;
 
+    const sprite = this.gasBoostSprite; // Store in const for type narrowing
     const gasWidth = width * 0.15; // Reduced from 0.18
     const gasHeight = gasWidth * 0.69; // Correct aspect ratio for gas sprite (67/97)
 
@@ -616,7 +617,7 @@ export class BattleRoyaleRenderer {
       ctx.save();
       ctx.globalAlpha = opacity;
       ctx.drawImage(
-        this.gasBoostSprite,
+        sprite,
         trailX - (gasWidth * scale) / 2,
         trailY - (gasHeight * scale) / 2,
         gasWidth * scale,

@@ -13,7 +13,7 @@ const PIPE_MAX_Y = 0.7;
 const BIRD_COLORS = ["yellow", "red", "blue"];
 const MIN_PLAYERS_TO_START = process.env.DEBUG_MODE === "true" ? 1 : 2;
 const MAX_PLAYERS = 20;
-const COUNTDOWN_SECONDS = 5;
+const COUNTDOWN_SECONDS = process.env.DEBUG_MODE === "true" ? 0 : 5; // Skip countdown in debug mode
 const TICK_RATE = 60; // 60 FPS
 // Multi-hole pipe configuration
 const MIN_HOLES_PER_PIPE = 1;
@@ -21,11 +21,11 @@ const MAX_HOLES_PER_PIPE = 3;
 const MIN_HOLE_SPACING = 0.25; // Minimum vertical spacing between holes
 const MIN_HOLE_SIZE = 0.15;
 const MAX_HOLE_SIZE = 0.2;
-const ITEM_SPAWN_CHANCE = 0.35; // 35% chance per hole (max 1 per pipe)
+const ITEM_SPAWN_CHANCE = 0.5; // 50% chance per pipe (increased from 35% to compensate for faster degradation)
 // Vision system configuration
-const VISION_DEGRADATION_RATE = 0.00015; // Vision loss per tick (60 ticks/sec)
-const MIN_VISION = 0.15; // Minimum vision (never completely blind)
-const VISION_RESTORE_AMOUNT = 0.6; // How much vision diving mask restores
+const VISION_DEGRADATION_RATE = 0.002; // Vision loss per tick (60 ticks/sec) = ~12% per second = ~7 seconds to reach minimum
+const MIN_VISION = 0.05; // Minimum vision - VERY dark (barely able to see)
+const VISION_RESTORE_AMOUNT = 0.7; // How much diving mask restores (increased to compensate)
 class BattleRoyaleRoom extends core_1.Room {
     constructor() {
         super(...arguments);
@@ -103,6 +103,11 @@ class BattleRoyaleRoom extends core_1.Room {
             return;
         this.state.phase = "countdown";
         this.state.countdown = COUNTDOWN_SECONDS;
+        // If countdown is 0 (DEBUG_MODE), start game immediately
+        if (COUNTDOWN_SECONDS === 0) {
+            this.startGame();
+            return;
+        }
         this.countdownInterval = setInterval(() => {
             this.state.countdown--;
             if (this.state.countdown <= 0) {
@@ -336,10 +341,11 @@ class BattleRoyaleRoom extends core_1.Room {
                 console.log(`${player.name} wins!`);
             }
         });
-        // Reset room after 10 seconds
+        // Reset room immediately in debug mode, or after 10 seconds in production
+        const resetDelay = process.env.DEBUG_MODE === "true" ? 0 : 10000;
         setTimeout(() => {
             this.resetRoom();
-        }, 10000);
+        }, resetDelay);
     }
     resetRoom() {
         this.state.phase = "waiting";
