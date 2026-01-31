@@ -467,11 +467,25 @@ export class BattleRoyaleRoom extends Room<BattleRoyaleState> {
       }
     });
 
-    // Reset room immediately in debug mode, or after 10 seconds in production
-    const resetDelay = process.env.DEBUG_MODE === "true" ? 0 : 10000;
-    setTimeout(() => {
+    // Reset room immediately in debug mode, or after countdown in production
+    const resetDelay = process.env.DEBUG_MODE === "true" ? 0 : 10;
+    this.state.countdown = resetDelay;
+    
+    if (resetDelay === 0) {
       this.resetRoom();
-    }, resetDelay);
+    } else {
+      // Count down every second
+      this.countdownInterval = setInterval(() => {
+        this.state.countdown--;
+        if (this.state.countdown <= 0) {
+          if (this.countdownInterval) {
+            clearInterval(this.countdownInterval);
+            this.countdownInterval = null;
+          }
+          this.resetRoom();
+        }
+      }, 1000);
+    }
   }
 
   private resetRoom() {

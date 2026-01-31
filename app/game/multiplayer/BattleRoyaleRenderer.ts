@@ -934,10 +934,10 @@ export class BattleRoyaleRenderer {
       }
     }
 
-    // Restart message
+    // Restart countdown
     ctx.fillStyle = '#888888';
     ctx.font = '22px Edo';
-    ctx.fillText('New game starting soon...', width / 2, height * 0.75);
+    ctx.fillText(`New game starting in ${state.countdown}...`, width / 2, height * 0.75);
   }
 
   private drawGasTrails(ctx: CanvasRenderingContext2D, width: number, height: number): void {
