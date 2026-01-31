@@ -68,8 +68,24 @@ export default function BattleRoyaleGame({ serverUrl = 'ws://localhost:2567' }: 
     
     console.log('[BattleRoyale] Audio loaded:', jumpSoundsRef.current.length, 'jump sounds,', deathSoundsRef.current.length, 'death sounds, main theme');
     
+    // Start main theme on page load (will play after first user interaction)
+    const playMainTheme = () => {
+      if (mainThemeRef.current && mainThemeRef.current.paused) {
+        mainThemeRef.current.play()
+          .then(() => console.log('[BattleRoyale] 🎵 Main theme playing on menu!'))
+          .catch(() => {}); // Ignore autoplay errors
+      }
+    };
+    
+    // Try to play immediately, otherwise wait for user interaction
+    playMainTheme();
+    document.addEventListener('click', playMainTheme, { once: true });
+    document.addEventListener('keydown', playMainTheme, { once: true });
+    
     // Cleanup on unmount
     return () => {
+      document.removeEventListener('click', playMainTheme);
+      document.removeEventListener('keydown', playMainTheme);
       if (mainThemeRef.current) {
         mainThemeRef.current.pause();
         mainThemeRef.current = null;
@@ -152,12 +168,11 @@ export default function BattleRoyaleGame({ serverUrl = 'ws://localhost:2567' }: 
           rendererRef.current.setSessionId(client.sessionId);
         }
         
-        // Start main theme when connected
+        // Stop main theme when game starts
         if (mainThemeRef.current) {
+          mainThemeRef.current.pause();
           mainThemeRef.current.currentTime = 0;
-          mainThemeRef.current.play()
-            .then(() => console.log('[BattleRoyale] 🎵 Main theme playing!'))
-            .catch(err => console.warn('[BattleRoyale] Main theme autoplay blocked:', err));
+          console.log('[BattleRoyale] 🎵 Main theme stopped (game started)');
         }
       });
 
@@ -165,9 +180,9 @@ export default function BattleRoyaleGame({ serverUrl = 'ws://localhost:2567' }: 
         setIsConnected(false);
         setError('Disconnected from server');
         
-        // Stop main theme when disconnected
+        // Restart main theme when disconnected (back to menu)
         if (mainThemeRef.current) {
-          mainThemeRef.current.pause();
+          mainThemeRef.current.play().catch(() => {});
         }
       });
 

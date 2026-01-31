@@ -137,6 +137,9 @@ export default class Game extends ParentClass {
     this.screenIntro.playButton.onClick(() => {
       if (this.state !== 'intro') return;
 
+      // Stop main theme when game starts
+      Sfx.stopMainTheme();
+
       // Deactivate buttons
       this.screenIntro.playButton.active = false;
       this.screenIntro.rankingButton.active = false;
