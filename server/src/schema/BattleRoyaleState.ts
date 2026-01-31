@@ -62,13 +62,15 @@ defineTypes(Hole, {
 export class Pipe extends Schema {
   x: number = 0;
   holes = new ArraySchema<Hole>();  // 2-3 holes per pipe
-  passed: boolean = false;
+  passed: boolean = false;  // Legacy - kept for compatibility but not used for scoring
+  passedBy = new ArraySchema<string>();  // Array of player IDs who have scored from this pipe
 }
 
 defineTypes(Pipe, {
   x: "number",
   holes: [Hole],
   passed: "boolean",
+  passedBy: ["string"],
 });
 
 /**

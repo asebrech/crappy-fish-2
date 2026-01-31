@@ -29,6 +29,7 @@ export interface PipeState {
   x: number;
   holes: HoleState[];
   passed: boolean;
+  passedBy: string[];  // Array of player IDs who have scored from this pipe
 }
 
 export interface GameState {
@@ -201,6 +202,13 @@ export class MultiplayerClient {
               }
             });
           }
+
+          // Listen to passedBy array changes (for scoring)
+          if (pipe.passedBy) {
+            pipe.passedBy.onAdd(() => {
+              rebuildPipes();
+            });
+          }
         });
 
         state.pipes.onRemove(() => {
@@ -275,7 +283,8 @@ export class MultiplayerClient {
         hasItem: hole.hasItem,
         itemCollectedBy: Array.from(hole.itemCollectedBy || [])
       })),
-      passed: pipe.passed
+      passed: pipe.passed,
+      passedBy: Array.from(pipe.passedBy || [])
     };
   }
 

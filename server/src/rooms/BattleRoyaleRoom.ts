@@ -384,9 +384,9 @@ export class BattleRoyaleRoom extends Room<BattleRoyaleState> {
           return;
         }
 
-        // Score point for passing pipe (only once)
-        if (!pipe.passed && birdX > pipe.x) {
-          pipe.passed = true;
+        // Score point for passing pipe (each player can score once per pipe)
+        if (!pipe.passedBy.includes(player.id) && birdX > pipe.x) {
+          pipe.passedBy.push(player.id);
           player.score++;
         }
       }
