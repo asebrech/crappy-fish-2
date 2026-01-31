@@ -459,31 +459,6 @@ export default function BattleRoyaleGame({ serverUrl = 'ws://localhost:2567' }: 
           cursor: isConnected ? 'pointer' : 'default'
         }}
       />
-
-      {/* Connection status indicator */}
-      {isConnected && (
-        <div style={{
-          position: 'absolute',
-          bottom: '20px',
-          left: '20px',
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          padding: '8px 16px',
-          borderRadius: '20px',
-          color: '#4CAF50',
-          fontSize: '12px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px'
-        }}>
-          <span style={{
-            width: '8px',
-            height: '8px',
-            backgroundColor: '#4CAF50',
-            borderRadius: '50%'
-          }} />
-          Connected
-        </div>
-      )}
     </div>
   );
 }

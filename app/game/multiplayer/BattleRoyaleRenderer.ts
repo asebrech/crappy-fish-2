@@ -13,7 +13,9 @@ const CUSTOM_BIRD_SPRITES = ['bird-blue-up', 'bird-blue-mid', 'bird-blue-down'];
 export class BattleRoyaleRenderer {
   private canvas: HTMLCanvasElement;
   private renderCanvas: HTMLCanvasElement; // Offscreen canvas for 2D rendering
+  private uiCanvas: HTMLCanvasElement; // Overlay canvas for UI (not affected by blur)
   private context: CanvasRenderingContext2D;
+  private uiContext: CanvasRenderingContext2D;
   private canvasSize: { width: number; height: number };
   private mySessionId: string = "";
   private animationFrame: number = 0;
@@ -45,6 +47,14 @@ export class BattleRoyaleRenderer {
     this.renderCanvas.width = canvas.width;
     this.renderCanvas.height = canvas.height;
     this.context = this.renderCanvas.getContext('2d', { alpha: false })!;
+    
+    // Create UI overlay canvas (positioned on top of main canvas)
+    this.uiCanvas = document.createElement('canvas');
+    this.uiCanvas.width = canvas.width;
+    this.uiCanvas.height = canvas.height;
+    this.uiCanvas.style.position = 'absolute';
+    this.uiCanvas.style.pointerEvents = 'none'; // Allow clicks to pass through
+    this.uiContext = this.uiCanvas.getContext('2d', { alpha: true })!;
     
     // Initialize WebGL post-processor on the display canvas
     try {
@@ -142,6 +152,30 @@ export class BattleRoyaleRenderer {
       this.renderCanvas.width = width;
       this.renderCanvas.height = height;
     }
+    
+    // Also resize UI overlay canvas and sync its position with main canvas
+    if (this.uiCanvas) {
+      this.uiCanvas.width = width;
+      this.uiCanvas.height = height;
+      this.syncUICanvasPosition();
+    }
+  }
+  
+  // Sync UI canvas position and size with main canvas
+  syncUICanvasPosition(): void {
+    if (!this.uiCanvas) return;
+    
+    // Append to body if not already
+    if (!this.uiCanvas.parentElement) {
+      document.body.appendChild(this.uiCanvas);
+    }
+    
+    // Get the main canvas's bounding rect
+    const rect = this.canvas.getBoundingClientRect();
+    this.uiCanvas.style.top = rect.top + 'px';
+    this.uiCanvas.style.left = rect.left + 'px';
+    this.uiCanvas.style.width = rect.width + 'px';
+    this.uiCanvas.style.height = rect.height + 'px';
   }
 
   render(state: GameState): void {
@@ -229,9 +263,6 @@ export class BattleRoyaleRenderer {
       ctx.fillRect(0, 0, width, height);
     }
 
-    // Draw UI overlay
-    this.drawUI(ctx, state, width, height);
-
     // Apply WebGL radial blur post-processing (not for spectators)
     if (this.postProcessor && state.phase === "playing" && myPlayer && myPlayer.alive && !myPlayer.isSpectating) {
       const intensity = 1.0 - myPlayer.vision;
@@ -261,6 +292,13 @@ export class BattleRoyaleRenderer {
         displayCtx.drawImage(this.renderCanvas, 0, 0);
       }
     }
+
+    // Sync UI canvas position with main canvas (every frame to handle scroll/resize)
+    this.syncUICanvasPosition();
+    
+    // Draw UI on separate overlay canvas (not affected by blur)
+    this.uiContext.clearRect(0, 0, width, height);
+    this.drawUI(this.uiContext, state, width, height);
   }
 
   private drawBackground(ctx: CanvasRenderingContext2D, width: number, height: number): void {
@@ -647,6 +685,29 @@ export class BattleRoyaleRenderer {
         this.drawFinishedUI(ctx, state, width, height);
         break;
     }
+    
+    // Draw "Connected" indicator (bottom left)
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    const indicatorWidth = 150;
+    const indicatorHeight = 38;
+    const indicatorX = 20;
+    const indicatorY = height - 55;
+    ctx.beginPath();
+    ctx.roundRect(indicatorX, indicatorY, indicatorWidth, indicatorHeight, 19);
+    ctx.fill();
+    
+    // Green dot
+    ctx.fillStyle = '#4CAF50';
+    ctx.beginPath();
+    ctx.arc(indicatorX + 22, indicatorY + indicatorHeight / 2, 6, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // "Connected" text
+    ctx.fillStyle = '#4CAF50';
+    ctx.font = 'bold 18px Arial';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Connected', indicatorX + 38, indicatorY + indicatorHeight / 2);
 
     ctx.restore();
   }
