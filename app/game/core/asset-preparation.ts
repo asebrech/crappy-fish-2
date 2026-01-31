@@ -6,9 +6,9 @@ import WebSfx from './lib/web-sfx';
 // Use static paths for Next.js public folder
 const atlas = '/game-assets/atlas.png';
 const sfDie = '/game-assets/audio/die.ogg';
-const sfHit = '/game-assets/audio/hit.ogg';
 const sfPoint = '/game-assets/audio/point.ogg';
 const sfSwoosh = '/game-assets/audio/swooshing.ogg';
+// Death sounds are now loaded directly in Sfx class using HTML5 Audio API
 // Mega pets sounds for jump (7 fart sounds)
 const sfJump1 = '/game-assets/audio/mega_pets/double-fart.ogg';
 const sfJump2 = '/game-assets/audio/mega_pets/double-jump-fart.ogg';
@@ -106,21 +106,24 @@ export default (callback: IEmptyFunction): void => {
     // Make sure this one is at the very bottom of SpriteDestructor.cutOut
     void sd.then(loadCallback);
 
-    new WebSfx(
-      {
-        hit: sfHit,
-        swoosh: sfSwoosh,
-        die: sfDie,
-        point: sfPoint,
-        jump1: sfJump1,
-        jump2: sfJump2,
-        jump3: sfJump3,
-        jump4: sfJump4,
-        jump5: sfJump5,
-        jump6: sfJump6,
-        jump7: sfJump7
-      },
-      loadCallback
-    );
+    const audioFiles = {
+      swoosh: sfSwoosh,
+      die: sfDie,
+      point: sfPoint,
+      jump1: sfJump1,
+      jump2: sfJump2,
+      jump3: sfJump3,
+      jump4: sfJump4,
+      jump5: sfJump5,
+      jump6: sfJump6,
+      jump7: sfJump7
+    };
+    
+    console.log('[AssetPreparation] Loading audio files:', Object.keys(audioFiles));
+    
+    new WebSfx(audioFiles, (cached) => {
+      console.log('[AssetPreparation] Audio files loaded:', Object.keys(cached));
+      loadCallback();
+    });
   });
 };

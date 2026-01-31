@@ -21,6 +21,9 @@ export default function BattleRoyaleGame({ serverUrl = 'ws://localhost:2567' }: 
   
   // Jump sounds
   const jumpSoundsRef = useRef<HTMLAudioElement[]>([]);
+  // Death sounds  
+  const deathSoundsRef = useRef<HTMLAudioElement[]>([]);
+  const mainThemeRef = useRef<HTMLAudioElement | null>(null);
   
   useEffect(() => {
     // Load jump sounds (7 fart sounds)
@@ -33,7 +36,45 @@ export default function BattleRoyaleGame({ serverUrl = 'ws://localhost:2567' }: 
       '/game-assets/audio/mega_pets/fart-4.ogg',
       '/game-assets/audio/mega_pets/fart-5.ogg'
     ];
-    jumpSoundsRef.current = soundPaths.map(path => new Audio(path));
+    jumpSoundsRef.current = soundPaths.map(path => {
+      const audio = new Audio(path);
+      audio.preload = 'auto';
+      audio.volume = 1.0;
+      return audio;
+    });
+    
+    // Load death sounds (7 death sounds)
+    const deathSoundPaths = [
+      '/game-assets/audio/death/death-1.ogg',
+      '/game-assets/audio/death/death-2.ogg',
+      '/game-assets/audio/death/death-3.ogg',
+      '/game-assets/audio/death/death-4.ogg',
+      '/game-assets/audio/death/death-7.ogg',
+      '/game-assets/audio/death/death-8.ogg',
+      '/game-assets/audio/death/death-9.ogg'
+    ];
+    deathSoundsRef.current = deathSoundPaths.map(path => {
+      const audio = new Audio(path);
+      audio.preload = 'auto';
+      audio.volume = 1.0;
+      return audio;
+    });
+    
+    // Load main theme
+    mainThemeRef.current = new Audio('/game-assets/audio/main_theme.ogg');
+    mainThemeRef.current.preload = 'auto';
+    mainThemeRef.current.loop = true;
+    mainThemeRef.current.volume = 0.5;
+    
+    console.log('[BattleRoyale] Audio loaded:', jumpSoundsRef.current.length, 'jump sounds,', deathSoundsRef.current.length, 'death sounds, main theme');
+    
+    // Cleanup on unmount
+    return () => {
+      if (mainThemeRef.current) {
+        mainThemeRef.current.pause();
+        mainThemeRef.current = null;
+      }
+    };
   }, []);
 
   const [isLoading, setIsLoading] = useState(true);
@@ -91,6 +132,8 @@ export default function BattleRoyaleGame({ serverUrl = 'ws://localhost:2567' }: 
 
     setIsConnecting(true);
     setError(null);
+    
+    console.log('[BattleRoyale] Connecting to server, death sounds loaded:', deathSoundsRef.current.length);
 
     try {
       const client = getMultiplayerClient(serverUrl);
@@ -108,16 +151,51 @@ export default function BattleRoyaleGame({ serverUrl = 'ws://localhost:2567' }: 
         if (rendererRef.current) {
           rendererRef.current.setSessionId(client.sessionId);
         }
+        
+        // Start main theme when connected
+        if (mainThemeRef.current) {
+          mainThemeRef.current.currentTime = 0;
+          mainThemeRef.current.play()
+            .then(() => console.log('[BattleRoyale] 🎵 Main theme playing!'))
+            .catch(err => console.warn('[BattleRoyale] Main theme autoplay blocked:', err));
+        }
       });
 
       client.setOnDisconnected(() => {
         setIsConnected(false);
         setError('Disconnected from server');
+        
+        // Stop main theme when disconnected
+        if (mainThemeRef.current) {
+          mainThemeRef.current.pause();
+        }
       });
 
       client.setOnError((err) => {
         setError(err.message);
         setIsConnecting(false);
+      });
+
+      // Listen for player death events
+      client.setOnPlayerDied((player, sessionId) => {
+        // Only play sound for local player
+        if (sessionId === client.sessionId) {
+          console.log('[BattleRoyale] ☠️ LOCAL PLAYER DIED! Playing death sound...');
+          if (deathSoundsRef.current.length > 0) {
+            const randomIndex = Math.floor(Math.random() * deathSoundsRef.current.length);
+            const sound = deathSoundsRef.current[randomIndex];
+            console.log('[BattleRoyale] Selected death sound index:', randomIndex);
+            sound.currentTime = 0;
+            const playPromise = sound.play();
+            if (playPromise !== undefined) {
+              playPromise
+                .then(() => console.log('[BattleRoyale] ✅ Death sound played successfully'))
+                .catch(err => console.error('[BattleRoyale] ❌ Death sound play failed:', err));
+            }
+          } else {
+            console.warn('[BattleRoyale] ⚠️ No death sounds loaded!');
+          }
+        }
       });
 
       await client.connect(playerName.trim());

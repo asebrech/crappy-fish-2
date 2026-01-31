@@ -59,7 +59,10 @@ export default class Game extends ParentClass {
     this.platform.init();
     this.transition.init();
 
-    void Sfx.init();
+    void Sfx.init().then(() => {
+      // Start main theme after Sfx is initialized
+      Sfx.playMainTheme();
+    });
     Sfx.volume(SFX_VOLUME);
 
     this.screenIntro.init();
