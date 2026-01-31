@@ -58,9 +58,13 @@ export class MultiplayerClient {
   private onStateChange: GameEventCallback | null = null;
   private onPlayerJoin: PlayerEventCallback | null = null;
   private onPlayerLeave: PlayerEventCallback | null = null;
+  private onPlayerDied: PlayerEventCallback | null = null;
   private onConnected: (() => void) | null = null;
   private onDisconnected: (() => void) | null = null;
   private onError: ((error: Error) => void) | null = null;
+
+  // Track previous alive state for death detection
+  private playerAliveStates = new Map<string, boolean>();
 
   // Local state cache
   private _state: GameState | null = null;
@@ -130,11 +134,27 @@ export class MultiplayerClient {
         state.players.onAdd((player: any, sessionId: string) => {
           const playerState = this.playerToState(player);
           this._state!.players.set(sessionId, playerState);
+          this.playerAliveStates.set(sessionId, playerState.alive);
           this.onPlayerJoin?.(playerState, sessionId);
 
           // Listen to player changes
           player.onChange(() => {
             const updatedState = this.playerToState(player);
+            const wasAlive = this.playerAliveStates.get(sessionId);
+            
+            // Debug log for all player state changes
+            if (sessionId === this._sessionId) {
+              console.log('[MultiplayerClient] Local player state change - alive:', updatedState.alive, 'wasAlive:', wasAlive);
+            }
+            
+            // Detect death transition (was alive, now dead)
+            if (wasAlive === true && updatedState.alive === false) {
+              console.log('[MultiplayerClient] ☠️ Player died detected:', sessionId, sessionId === this._sessionId ? '(LOCAL PLAYER)' : '(other)');
+              console.log('[MultiplayerClient] onPlayerDied callback exists:', !!this.onPlayerDied);
+              this.onPlayerDied?.(updatedState, sessionId);
+            }
+            
+            this.playerAliveStates.set(sessionId, updatedState.alive);
             this._state!.players.set(sessionId, updatedState);
           });
         });
@@ -273,6 +293,10 @@ export class MultiplayerClient {
 
   setOnPlayerLeave(callback: PlayerEventCallback): void {
     this.onPlayerLeave = callback;
+  }
+
+  setOnPlayerDied(callback: PlayerEventCallback): void {
+    this.onPlayerDied = callback;
   }
 
   setOnConnected(callback: () => void): void {

@@ -49,16 +49,24 @@ export default class WebSfx {
    * @returns Void.
    */
   public static play(key: string, endedcb?: IEmptyFunction): void {
-    if (typeof WebSfx.Cached[key] === void 0) {
-      throw new TypeError(`Key ${key} does not load or not exists.`);
-    }
-
-    if (WebSfx.gainContext === void 0) {
-      console.warn('WebSfx.play cannot execute. AudioContext is not started or resumed');
+    // Check if key exists in cache
+    if (WebSfx.Cached[key] === undefined) {
+      console.error(`[WebSfx] Key '${key}' does not exist in cache. Available keys:`, Object.keys(WebSfx.Cached));
+      endedcb?.();
       return;
     }
 
-    if (!WebSfx.isReady) return;
+    if (WebSfx.gainContext === void 0) {
+      console.warn('[WebSfx] Cannot play - AudioContext is not started or resumed (gainContext undefined)');
+      endedcb?.();
+      return;
+    }
+
+    if (!WebSfx.isReady) {
+      console.warn('[WebSfx] Cannot play - AudioContext is not ready (isReady=false, state=' + WebSfx.audioContext?.state + ')');
+      endedcb?.();
+      return;
+    }
 
     try {
       const context = WebSfx.audioContext!;
@@ -67,8 +75,10 @@ export default class WebSfx {
       bufferSource.addEventListener('ended', () => endedcb?.());
       bufferSource.connect(WebSfx.gainContext!);
       bufferSource.start();
+      console.log('[WebSfx] Playing sound:', key);
     } catch (err) {
-      throw new Error(`Failed to play audio: ${key}. Error: ${err}`);
+      console.error(`[WebSfx] Failed to play audio: ${key}. Error:`, err);
+      endedcb?.();
     }
   }
 
@@ -107,6 +117,10 @@ export default class WebSfx {
 
     // We should start after user event
     await WebSfx.audioContext.resume();
+    
+    // Force isReady to true after successful resume
+    WebSfx.isReady = WebSfx.audioContext.state === 'running';
+    console.log('[WebSfx] init() called, audioContext state:', WebSfx.audioContext.state, 'isReady:', WebSfx.isReady);
 
     const gain = WebSfx.audioContext.createGain();
 
