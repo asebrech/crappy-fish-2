@@ -336,8 +336,8 @@ Vercel will auto-detect Next.js and handle the rest.
 
 ## License
 
-MIT License - Do whatever you want with it. Make it weirder.
+BSD 3-Clause License - See [LICENSE](LICENSE) for details.
 
 ---
 
-**Now go flap, you beautiful fish.**
+**Now go crap, you beautiful fish.**
